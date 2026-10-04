@@ -54,18 +54,14 @@
   border: 0;
 }
 
-/* The video is for watching: taps on it do nothing (no pausing, YouTube
-   links, or suggested videos); the app's controls and phone remotes run
-   playback. Two transparent shields cover it, leaving one corner open: the
-   bottom-right, where YouTube shows its "Skip" button on ads, so it can be
-   tapped straight away. */
+/* "🔒 Lock video": taps on the video do nothing (no pausing, YouTube links,
+   or suggested videos). Two transparent shields cover it, leaving one corner
+   open: the bottom-right, where YouTube shows its "Skip" button on ads, so
+   ads can still be skipped right away. Unlocked (the default), it's a normal
+   YouTube player. */
 .karaoke-player {
   --skip-zone-width: clamp(150px, 30%, 340px);
   --skip-zone-height: clamp(72px, 26%, 170px);
-}
-
-.karaoke-player__video {
-  user-select: none;
 }
 
 .video-shield {
@@ -87,17 +83,7 @@
   right: var(--skip-zone-width);
 }
 
-/* Yellow frame while unlocked, drawn over the video without catching taps. */
-.karaoke-player__video--unlocked::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 3px solid rgba(252, 209, 22, 0.75);
-  pointer-events: none;
-}
-
-/* Backup: "🔓 Unlock video" removes the shields for a few seconds. */
-.ad-skip {
+.video-lock {
   position: absolute;
   top: 12px;
   left: 12px;
@@ -116,21 +102,19 @@
   transition: opacity 0.2s var(--ease);
 }
 
-.ad-skip:hover,
-.ad-skip:focus-visible,
-.karaoke-player:hover .ad-skip {
+.video-lock:hover,
+.video-lock:focus-visible,
+.karaoke-player:hover .video-lock {
   opacity: 1;
 }
 
-.ad-skip--unlocked {
-  border-color: rgba(252, 209, 22, 0.75);
-  background: rgba(60, 46, 4, 0.85);
+.video-lock--locked {
+  border-color: rgba(252, 209, 22, 0.6);
   color: #ffe58a;
-  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ad-skip {
+  .video-lock {
     transition: none;
   }
 }
