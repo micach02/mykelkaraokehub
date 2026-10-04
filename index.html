@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>myKelKaraokeHub — Your Songs. Your Queue. Your Karaoke.</title>
+    <meta name="description" content="myKelKaraokeHub is a web karaoke jukebox for OPM and more. Search songs, build a queue, and sing on your laptop, tablet, or TV." />
+    <meta name="application-name" content="myKel Karaoke" />
+    <meta name="theme-color" content="#05050b" />
+    <meta property="og:title" content="myKelKaraokeHub" />
+    <meta property="og:description" content="Your Songs. Your Queue. Your Karaoke." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      /* Boot splash, replaced as soon as React mounts. */
+      .boot { position: fixed; inset: 0; display: grid; place-content: center; gap: 12px; text-align: center;
+        background: radial-gradient(circle at 50% 30%, #21164a, #05050b 70%); color: #f5f3ff;
+        font-family: 'Inter', system-ui, sans-serif; }
+      .boot__logo { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+      .boot__tag { color: #b9b2d3; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot" role="status">
+        <div class="boot__logo">🎤 myKelKaraokeHub</div>
+        <div class="boot__tag">Your Songs. Your Queue. Your Karaoke.</div>
+      </div>
+    </div>
+    <noscript>myKelKaraokeHub needs JavaScript to run.</noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

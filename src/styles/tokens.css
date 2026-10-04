@@ -1,0 +1,70 @@
+/* myKelKaraokeHub design tokens — dark, glassy, "aurora" theme. */
+@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: near-black base, translucent glass layers on top */
+  --bg: #05050b;
+  --bg-elevated: rgba(17, 15, 32, 0.72);
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.075);
+  --surface-3: rgba(255, 255, 255, 0.11);
+  --glass: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Text */
+  --text: #f3f2fb;
+  --text-muted: #aeadc6;
+  --text-dim: #85839f;
+
+  /* Brand: violet → magenta → pink, with a cyan highlight */
+  --accent: #b47bff;
+  --accent-strong: #8b5cf6;
+  --violet: #7c5cff;
+  --violet-strong: #6d4cff;
+  --cyan: #3dd9ff;
+  --pink: #ff5fa2;
+  --gold: #fcd116;
+  --ph-blue: #0038a8;
+  --ph-red: #ce1126;
+  --success: #34d399;
+  --danger: #f43f5e;
+  --focus: #8fe9ff;
+
+  --gradient-brand: linear-gradient(135deg, #6d4cff 0%, #a33df0 55%, #d6337e 100%);
+  --gradient-ai: linear-gradient(90deg, #3dd9ff, #7c5cff, #ff5fa2);
+  --gradient-ring: conic-gradient(from var(--angle), #3dd9ff, #7c5cff, #ff5fa2, #ffb86b, #3dd9ff);
+  --gradient-text: linear-gradient(90deg, #8fe9ff 0%, #b69cff 45%, #ff8ec2 100%);
+  --gradient-opm: linear-gradient(120deg, rgba(0, 56, 168, 0.6), rgba(206, 17, 38, 0.5));
+
+  /* Shape & depth */
+  --radius-sm: 10px;
+  --radius: 18px;
+  --radius-lg: 26px;
+  --radius-pill: 999px;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --glow: 0 0 0 1px rgba(180, 123, 255, 0.45), 0 10px 40px rgba(124, 92, 255, 0.28);
+
+  /* Layout */
+  --gutter: clamp(16px, 3vw, 40px);
+  --sidebar-width: clamp(300px, 24vw, 420px);
+  --mobile-nav-height: 64px;
+
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* TV / large screens: scale everything up via rem. */
+@media (min-width: 1600px) {
+  html { font-size: 18px; }
+}
+@media (min-width: 2200px) {
+  html { font-size: 22px; }
+}

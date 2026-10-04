@@ -1,0 +1,500 @@
+/* Phone remote (/remote/:code). Mobile-first, big touch targets. */
+
+.remote {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+.remote--message {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.remote__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(11, 8, 20, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.remote__brand {
+  min-width: 0;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remote__status {
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.remote__status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5b942;
+}
+
+.remote__status--live::before {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.remote__name {
+  flex-shrink: 0;
+  margin-left: auto;
+  max-width: 45%;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote__banner {
+  margin: 10px 16px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 185, 66, 0.15);
+  color: #ffe0a3;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.remote__main {
+  flex: 1;
+  padding: 16px;
+}
+
+.remote-heading {
+  margin: 18px 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Name */
+.remote-name {
+  margin: 12px 16px 0;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.remote-name__label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.remote-name__label span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.remote-name__row {
+  display: flex;
+  gap: 8px;
+}
+
+.remote-name__input {
+  flex: 1;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1rem; /* 16px+ stops iOS from zooming in */
+}
+
+.remote-name__skip {
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+}
+
+/* Now playing */
+.remote-now {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  margin: 12px 16px 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 77, 148, 0.4);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(300px 120px at 0% 0%, rgba(255, 77, 148, 0.2), transparent 70%),
+    var(--surface);
+}
+
+.remote-now--empty {
+  display: block;
+  border-color: var(--border);
+}
+
+.remote-now__thumb {
+  width: 88px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.remote-now__text {
+  min-width: 0;
+}
+
+.remote-now__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.remote-now__title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-now__artist,
+.remote-now__next {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-now__controls {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+}
+
+.remote-control {
+  flex: 1;
+  height: 3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 1.3rem;
+}
+
+.remote-control--primary {
+  border-color: transparent;
+  background: var(--gradient-brand);
+  color: #fff;
+}
+
+.remote-control:disabled {
+  opacity: 0.4;
+}
+
+/* Lists */
+.remote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.remote-song {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.remote-song--queued {
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.remote-song__thumb {
+  flex-shrink: 0;
+  width: 72px;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: var(--surface-3);
+  object-fit: cover;
+}
+
+.remote-song__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.remote-song__title {
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-song__artist {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-song__channel {
+  color: var(--text-dim);
+}
+
+.remote-add {
+  flex-shrink: 0;
+  min-width: 4.6rem;
+  height: 2.75rem;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-brand);
+  color: #fff;
+  font-weight: 800;
+}
+
+.remote-add--done {
+  background: rgba(52, 211, 153, 0.18);
+  color: var(--success);
+}
+
+.remote-add:disabled {
+  opacity: 0.5;
+}
+
+.remote-remove {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.15);
+  color: #ff8fa3;
+}
+
+.remote-queue__index {
+  min-width: 1.4rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.remote-search {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.remote-search__go {
+  height: 3rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 700;
+}
+
+.remote-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.remote-empty__icon {
+  font-size: 2.5rem;
+}
+
+.remote-empty__title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* Bottom tabs */
+.remote__tabs {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(14, 10, 26, 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+
+.remote__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 3rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.remote__tab--active {
+  background: rgba(255, 77, 148, 0.16);
+  color: var(--text);
+}
+
+/* Room code in the header doubles as an Invite shortcut. */
+button.remote__status {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.remote__tabs {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Invite */
+.remote-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.remote-invite__title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.remote-invite__text,
+.remote-invite__note {
+  color: var(--text-muted);
+}
+
+.remote-invite__qr {
+  margin: 6px 0;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: #fff;
+  line-height: 0;
+  box-shadow: 0 0 0 1px rgba(180, 123, 255, 0.4), 0 14px 50px rgba(124, 92, 255, 0.35);
+}
+
+.remote-invite__code {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.remote-invite__url {
+  max-width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.remote-invite__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.remote-invite__primary {
+  grid-column: 1 / -1;
+  height: 3rem;
+}
+
+.remote-invite__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.remote-invite__note {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.remote__tab {
+  gap: 6px;
+  padding: 0 6px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* Narrow phones: the 🎤 icon is enough; room code and name need the space. */
+@media (max-width: 420px) {
+  .remote__brand-name {
+    display: none;
+  }
+}
+
+/* Copy link gets its own row; messaging apps sit 2 × 2 below it. */
+.remote-invite__copy {
+  grid-column: 1 / -1;
+}

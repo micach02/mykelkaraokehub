@@ -1,0 +1,823 @@
+/* ---------- Player stage ---------- */
+.player-stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.player-stage__bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 1.1fr);
+  align-items: center;
+  gap: 12px 24px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.player-stage__collapse {
+  display: none;
+}
+
+/* App-managed fullscreen of the player (outside Karaoke Mode). */
+.player-stage:fullscreen {
+  border-radius: 0;
+  border: 0;
+}
+
+.player-stage:fullscreen .karaoke-player {
+  flex: 1;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+/* ---------- Karaoke player ---------- */
+.karaoke-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 64vh;
+  background: #000;
+  overflow: hidden;
+}
+
+.karaoke-player__video,
+.karaoke-player__video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.karaoke-player__video--hidden {
+  visibility: hidden;
+}
+
+.player-stage--idle .karaoke-player {
+  aspect-ratio: auto;
+  height: clamp(240px, 32vh, 380px);
+}
+
+/* ---------- Overlays ---------- */
+.player-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.player-overlay--solid {
+  background:
+    radial-gradient(600px 300px at 50% 0%, rgba(255, 77, 148, 0.25), transparent 70%),
+    radial-gradient(700px 400px at 50% 100%, rgba(123, 63, 228, 0.3), transparent 70%),
+    #0e0a1c;
+}
+
+.player-overlay--dim {
+  background: rgba(5, 3, 12, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.player-overlay--passive {
+  pointer-events: none;
+}
+
+.player-overlay__icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.player-overlay__brand {
+  font-size: clamp(1.75rem, 4vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.player-overlay__tagline {
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  font-weight: 700;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.player-overlay__title {
+  font-size: clamp(1.3rem, 2.5vw, 2.25rem);
+}
+
+.player-overlay__text {
+  max-width: 46ch;
+  color: var(--text-muted);
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+}
+
+.player-overlay__countdown {
+  color: #ffd166;
+  font-weight: 700;
+}
+
+.player-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ---------- Now playing ---------- */
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.now-playing__text {
+  min-width: 0;
+}
+
+.now-playing__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.now-playing__artist,
+.now-playing__next {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.now-playing__next strong {
+  color: var(--text);
+}
+
+.now-playing--empty {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.now-playing--empty .now-playing__title {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.now-playing--xl {
+  gap: 20px;
+}
+
+.now-playing--xl .now-playing__art {
+  width: clamp(4.5rem, 7vw, 7rem);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.now-playing--xl .eyebrow {
+  font-size: 0.9rem;
+}
+
+.now-playing--xl .now-playing__title {
+  font-size: clamp(1.5rem, 2.4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.now-playing--xl .now-playing__artist {
+  font-size: clamp(1.05rem, 1.4vw, 1.5rem);
+}
+
+.now-playing--xl .now-playing__next {
+  margin-top: 6px;
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
+}
+
+/* ---------- Player controls ---------- */
+.player-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.player-controls__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Wraps on narrow screens (Auto-score moves to a second line). */
+.player-controls__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress__time {
+  min-width: 2.6rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.progress__track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #ffb3d1);
+  transition: width 0.5s linear;
+}
+
+.volume-slider {
+  --value: 100%;
+  width: 7rem;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--accent) var(--value), rgba(255, 255, 255, 0.16) var(--value));
+  appearance: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  appearance: none;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.player-controls--xl {
+  gap: 14px;
+}
+
+.player-controls--xl .progress__track {
+  height: 10px;
+}
+
+.player-controls--xl .progress__time {
+  min-width: 3.5rem;
+  font-size: 1.05rem;
+}
+
+.player-controls--xl .player-controls__group {
+  gap: 14px;
+}
+
+.player-controls--xl .volume-slider {
+  width: 10rem;
+  height: 10px;
+}
+
+.player-controls--xl .volume-slider::-webkit-slider-thumb {
+  width: 26px;
+  height: 26px;
+}
+
+/* ---------- Queue ---------- */
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+}
+
+.queue__section--grow {
+  flex: 1;
+}
+
+.queue__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.queue__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.queue__header .queue__heading {
+  margin-bottom: 0;
+}
+
+.queue__muted {
+  color: var(--text-dim);
+}
+
+.queue-now {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.queue-now--live {
+  border-color: rgba(255, 77, 148, 0.55);
+  box-shadow: var(--glow);
+}
+
+.queue-now__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-now__title {
+  font-weight: 800;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.queue-now__artist {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.queue__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-item {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.queue-item:hover {
+  background: var(--surface-2);
+}
+
+.queue-item--dragging {
+  opacity: 0.4;
+}
+
+.queue-item--drop-target {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.queue-item__handle {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: grab;
+}
+
+.queue-item__handle:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.queue-item__index {
+  min-width: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.queue-item__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+
+.queue-item__main:hover .queue-item__title {
+  color: #ffb3d1;
+}
+
+.queue-item__title,
+.queue-item__artist {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.queue-item__title {
+  font-weight: 700;
+}
+
+.queue-item__artist {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.queue-item__actions {
+  display: flex;
+  gap: 2px;
+}
+
+.queue--page {
+  max-width: 860px;
+  padding: 0;
+}
+
+.queue--page .queue-item {
+  padding: 10px 10px 10px 6px;
+}
+
+.queue--page .queue-item__title {
+  font-size: 1.1rem;
+}
+
+.queue--page .icon-btn {
+  width: 2.4rem;
+  height: 2.4rem;
+  font-size: 0.95rem;
+}
+
+.queue--sheet .icon-btn {
+  width: 2.3rem;
+  height: 2.3rem;
+}
+
+/* ---------- Karaoke Mode ---------- */
+.app--karaoke {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  background: #000;
+}
+
+.app--karaoke .app__top {
+  grid-template-columns: 1fr;
+  padding: 0;
+  gap: 0;
+  min-height: 0;
+}
+
+.app--karaoke .player-stage {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #000;
+}
+
+.app--karaoke .karaoke-player {
+  flex: 1;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+.app--karaoke .app__main {
+  padding: 0;
+}
+
+.karaoke-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px 40px;
+  padding: 20px 40px 16px;
+  background: linear-gradient(to top, #0b0814, #140e28);
+  border-top: 1px solid var(--border-strong);
+  transition: opacity 0.4s;
+}
+
+.karaoke-mode__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.karaoke-mode__shortcuts {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* While a song plays and nobody touches anything, fade the deck and hide
+   the cursor. No layout shift, so on-video lyrics are never covered. */
+.app--controls-hidden {
+  cursor: none;
+}
+
+.app--controls-hidden .karaoke-mode {
+  opacity: 0.3;
+}
+
+@media (max-width: 1280px) {
+  .karaoke-mode {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 16px 24px;
+    gap: 14px 24px;
+  }
+
+  .karaoke-mode__actions {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+/* ---------- Mobile player ---------- */
+@media (max-width: 900px) {
+  .player-stage {
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .player-stage--idle .karaoke-player {
+    aspect-ratio: auto;
+    height: 220px;
+  }
+
+  .player-stage__bar {
+    grid-template-columns: 1fr;
+    padding: 12px 16px;
+  }
+
+  .player-stage--idle .player-stage__bar {
+    display: none;
+  }
+
+  .player-stage__collapse {
+    display: block;
+    justify-self: center;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  /* Collapsed: the video keeps playing (the iframe stays mounted), it just
+     takes no space, so browsing comes first on phones. */
+  .player-stage--collapsed .karaoke-player {
+    aspect-ratio: auto;
+    height: 0;
+  }
+
+  .player-stage--collapsed .player-controls .progress {
+    display: none;
+  }
+
+  .player-overlay__actions .btn--lg {
+    --btn-height: 2.75rem;
+    font-size: 0.95rem;
+    padding: 0 1rem;
+  }
+
+  .player-overlay__text {
+    font-size: 0.9rem;
+  }
+
+  .player-overlay--welcome .player-overlay__text {
+    display: none;
+  }
+
+  .volume-slider {
+    width: 5rem;
+  }
+
+  .app--karaoke {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    grid-template-rows: auto auto;
+  }
+
+  .app--karaoke .karaoke-player {
+    aspect-ratio: 16 / 9;
+    height: auto;
+  }
+
+  .karaoke-mode {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .karaoke-mode__actions {
+    flex-wrap: wrap;
+  }
+
+  .karaoke-mode__shortcuts {
+    display: none;
+  }
+
+  .player-controls--xl .btn--xl {
+    --btn-height: 3.25rem;
+    font-size: 1.1rem;
+  }
+}
+
+/* ---------- Room (phone remote) ---------- */
+.room-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.room-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.room-status__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f5b942;
+}
+
+.room-status--live .room-status__dot {
+  background: var(--success);
+  box-shadow: 0 0 10px var(--success);
+}
+
+.room-status--error .room-status__dot {
+  background: var(--danger);
+}
+
+.room-card__qr {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: #fff;
+  line-height: 0;
+}
+
+.room-card__label {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.room-card__code {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.room-card__url {
+  max-width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.room-card__url strong {
+  color: var(--text);
+  user-select: all;
+}
+
+.room-card__network {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.room-card__network select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.room-card__tips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: left;
+  list-style: disc inside;
+}
+
+/* QR card in the Karaoke Mode deck */
+.room-qr-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.room-qr-card svg {
+  border-radius: 6px;
+}
+
+.room-qr-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.room-qr-card__text strong {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+@media (max-width: 1280px) {
+  .room-qr-card {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+

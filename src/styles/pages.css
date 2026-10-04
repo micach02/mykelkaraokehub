@@ -1,0 +1,271 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  animation: page-in 0.25s var(--ease);
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+/* ---------- Sections ---------- */
+.section__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  font-weight: 800;
+}
+
+.section__title--sub {
+  margin: 12px 0 16px;
+  font-size: 1.2rem;
+}
+
+.section__subtitle {
+  flex-basis: 100%;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.section__count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.section__filter {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.section__search {
+  width: min(320px, 100%);
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(28px, 5vw, 56px) 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(500px 220px at 15% 0%, rgba(255, 77, 148, 0.25), transparent 70%),
+    radial-gradient(600px 260px at 85% 100%, rgba(123, 63, 228, 0.3), transparent 70%),
+    var(--bg-elevated);
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero__title {
+  font-size: clamp(1.9rem, 4.5vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.hero__tagline {
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
+  font-weight: 800;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero__text {
+  color: var(--text-muted);
+}
+
+.hero__search {
+  width: min(680px, 100%);
+  margin-top: 14px;
+}
+
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero__quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.quick-chip {
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+
+.quick-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+/* ---------- Page banner ---------- */
+.page-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(500px 200px at 100% 0%, rgba(123, 63, 228, 0.35), transparent 70%),
+    var(--bg-elevated);
+  overflow: hidden;
+}
+
+.page-banner--opm {
+  background: var(--gradient-opm), var(--bg-elevated);
+}
+
+/* The sun of the Philippine flag, as a soft glow. */
+.page-banner--opm::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(252, 209, 22, 0.55), rgba(252, 209, 22, 0) 65%);
+  pointer-events: none;
+}
+
+.page-banner__title {
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.page-banner__text {
+  max-width: 60ch;
+  color: rgba(245, 243, 255, 0.86);
+  font-size: 1.05rem;
+}
+
+/* ---------- Category index ---------- */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 16px;
+}
+
+.category-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 12px;
+}
+
+.category-grid--compact .category-tile {
+  padding: 14px 16px;
+}
+
+.category-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+  transition: transform 0.18s var(--ease), border-color 0.18s, box-shadow 0.2s;
+}
+
+.category-tile:hover,
+.category-tile:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(255, 77, 148, 0.5);
+  box-shadow: var(--glow);
+}
+
+.category-tile--featured {
+  background: var(--gradient-opm), var(--surface);
+  border-color: rgba(252, 209, 22, 0.45);
+}
+
+.category-tile__icon {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.category-tile__label {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.category-tile__count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffb3d1;
+}
+
+.category-tile__desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Queue page ---------- */
+.room-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 860px;
+  padding: 20px 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.room-cta__title {
+  font-size: 1.15rem;
+}
+
+.room-cta__text {
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .page {
+    gap: 28px;
+  }
+
+  .app--karaoke {
+    padding-bottom: 0;
+  }
+
+  .section__search {
+    width: 100%;
+  }
+}
+
+.section__subtitle--spaced {
+  margin: -8px 0 14px;
+}
