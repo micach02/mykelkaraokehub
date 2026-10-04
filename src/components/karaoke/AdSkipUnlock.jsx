@@ -2,10 +2,22 @@ import { useCallback, useEffect, useState } from 'react'
 import { PLAYER_CONFIG } from '../../config/appConfig'
 import { cx } from '../../utils/classNames'
 
-// The video ignores taps (watch-only, see karaoke.css). YouTube may still show
-// an ad with its own "Skip" button; the app can't press it (YouTube doesn't
-// allow that), so "⏭ Skip ad" lets taps through to the video for a few
-// seconds. It locks again by itself, and when the song changes.
+// The video is watch-only: two transparent shields stop taps from pausing it
+// or opening YouTube links. They leave the bottom-right corner open, where
+// YouTube shows its "Skip" button on ads, so it can be tapped straight away.
+// (The app can't press it itself; YouTube doesn't allow that.)
+export function VideoShield() {
+  return (
+    <>
+      <div className="video-shield video-shield--top" aria-hidden="true" />
+      <div className="video-shield video-shield--left" aria-hidden="true" />
+    </>
+  )
+}
+
+// Backup: "🔓 Unlock video" removes the shields for a few seconds (in case
+// something else on the video needs a tap). It locks again by itself, and
+// when the song changes.
 export function useVideoUnlock(songKey) {
   const [until, setUntil] = useState(null)
   const [now, setNow] = useState(() => Date.now())
@@ -36,21 +48,17 @@ export function useVideoUnlock(songKey) {
   return { unlocked, secondsLeft, unlock, lock }
 }
 
-export function AdSkipUnlock({ unlocked, secondsLeft, unlock, lock }) {
+export function AdSkipUnlock({ unlocked, unlock, lock }) {
   return (
     <button
       type="button"
       className={cx('ad-skip', unlocked && 'ad-skip--unlocked')}
       onClick={unlocked ? lock : unlock}
       aria-pressed={unlocked}
-      aria-label={
-        unlocked
-          ? `The video is unlocked for ${secondsLeft} seconds: tap YouTube's Skip button on the ad. Tap here to lock it now.`
-          : "Skip ad: unlock the video for a few seconds so you can tap YouTube's Skip button"
-      }
-      title={unlocked ? 'Tap YouTube’s “Skip” button on the ad' : 'Ad playing? Unlock the video to tap YouTube’s Skip button'}
+      aria-label={unlocked ? 'Lock the video again' : 'Unlock the video, so any part of it can be tapped'}
+      title={unlocked ? 'Lock the video again' : 'Ad Skip buttons work right away. Use this only if something else on the video needs a tap.'}
     >
-      {unlocked ? <>👆 Tap “Skip” on the ad · {secondsLeft}</> : '⏭ Skip ad'}
+      {unlocked ? '🔒 Lock video' : '🔓 Unlock video'}
     </button>
   )
 }

@@ -139,26 +139,30 @@ describe('myKelKaraokeHub (TV)', () => {
     scrollTo.mockRestore()
   })
 
-  it('the video is watch-only, but ⏭ Skip ad lets taps through for YouTube’s own Skip button', async () => {
+  it('the video is watch-only except the ad Skip corner; 🔓 Unlock video opens all of it', async () => {
     renderApp()
     const results = await searchYouTube('opm')
     fireEvent.click(results.getByRole('button', { name: 'Play Kathang Isip by Ben&Ben now' }))
     const player = within(screen.getByRole('region', { name: 'Karaoke player' }))
-    const video = document.querySelector('.karaoke-player__video')
-    const unlocked = () => video.classList.contains('karaoke-player__video--unlocked')
+    const shields = () => document.querySelectorAll('.video-shield')
+    const unlocked = () => document.querySelector('.karaoke-player__video').classList.contains('karaoke-player__video--unlocked')
 
-    fireEvent.click(await player.findByRole('button', { name: /^Skip ad/ }))
+    // Shields cover the video except the bottom-right corner (YouTube's Skip
+    // button there can be tapped straight away, nothing to press first).
+    await waitFor(() => expect(shields()).toHaveLength(2))
+    expect([...shields()].map((s) => s.className)).toEqual(['video-shield video-shield--top', 'video-shield video-shield--left'])
+
+    // Backup: unlock everything for a moment.
+    fireEvent.click(await player.findByRole('button', { name: /^Unlock the video/ }))
+    expect(shields()).toHaveLength(0)
     expect(unlocked()).toBe(true)
-    const pressed = player.getByRole('button', { name: /unlocked for 15 seconds/ })
-    expect(pressed.textContent).toMatch(/Tap “Skip” on the ad · 15/)
-
-    fireEvent.click(pressed) // lock again early
-    expect(unlocked()).toBe(false)
+    fireEvent.click(player.getByRole('button', { name: 'Lock the video again' }))
+    expect(shields()).toHaveLength(2)
 
     // A new song always starts locked.
-    fireEvent.click(player.getByRole('button', { name: /^Skip ad/ }))
+    fireEvent.click(player.getByRole('button', { name: /^Unlock the video/ }))
     fireEvent.click(results.getByRole('button', { name: 'Play Tadhana by Up Dharma Down now' }))
-    await waitFor(() => expect(unlocked()).toBe(false))
+    await waitFor(() => expect(shields()).toHaveLength(2))
   })
 
   it('Play Now keeps the queue; skip, reorder, remove, and clear work', async () => {

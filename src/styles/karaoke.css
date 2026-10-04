@@ -54,21 +54,37 @@
   border: 0;
 }
 
-/* The video is for watching only: taps and clicks on it do nothing (no
-   pausing, no YouTube links or suggested videos). The app's own controls,
-   overlays, and phone remotes control playback. */
+/* The video is for watching: taps on it do nothing (no pausing, YouTube
+   links, or suggested videos); the app's controls and phone remotes run
+   playback. Two transparent shields cover it, leaving one corner open: the
+   bottom-right, where YouTube shows its "Skip" button on ads, so it can be
+   tapped straight away. */
+.karaoke-player {
+  --skip-zone-width: clamp(150px, 30%, 340px);
+  --skip-zone-height: clamp(72px, 26%, 170px);
+}
+
 .karaoke-player__video {
   user-select: none;
 }
 
-.karaoke-player__video iframe {
-  pointer-events: none;
+.video-shield {
+  position: absolute;
+  z-index: 1; /* over the video, under the app's overlays */
 }
 
-/* "⏭ Skip ad" pressed: taps reach the video for a few seconds, so YouTube's
-   own Skip button on an ad can be pressed. */
-.karaoke-player__video--unlocked iframe {
-  pointer-events: auto;
+.video-shield--top {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--skip-zone-height);
+}
+
+.video-shield--left {
+  left: 0;
+  bottom: 0;
+  height: var(--skip-zone-height);
+  right: var(--skip-zone-width);
 }
 
 /* Yellow frame while unlocked, drawn over the video without catching taps. */
@@ -80,6 +96,7 @@
   pointer-events: none;
 }
 
+/* Backup: "🔓 Unlock video" removes the shields for a few seconds. */
 .ad-skip {
   position: absolute;
   top: 12px;
