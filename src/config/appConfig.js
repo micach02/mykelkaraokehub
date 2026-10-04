@@ -26,6 +26,9 @@ export const PLAYER_CONFIG = {
   // blocking autoplay with sound), show a "Play" button instead.
   autoplayTimeoutMs: 6000,
   defaultVolume: 100,
+  // The video ignores taps (watch-only). "⏭ Skip ad" lets taps through for
+  // this long, so people can press YouTube's own "Skip" button on an ad.
+  adUnlockSeconds: 15,
 }
 
 export const SEARCH_CONFIG = {

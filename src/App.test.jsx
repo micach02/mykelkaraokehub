@@ -139,6 +139,28 @@ describe('myKelKaraokeHub (TV)', () => {
     scrollTo.mockRestore()
   })
 
+  it('the video is watch-only, but ⏭ Skip ad lets taps through for YouTube’s own Skip button', async () => {
+    renderApp()
+    const results = await searchYouTube('opm')
+    fireEvent.click(results.getByRole('button', { name: 'Play Kathang Isip by Ben&Ben now' }))
+    const player = within(screen.getByRole('region', { name: 'Karaoke player' }))
+    const video = document.querySelector('.karaoke-player__video')
+    const unlocked = () => video.classList.contains('karaoke-player__video--unlocked')
+
+    fireEvent.click(await player.findByRole('button', { name: /^Skip ad/ }))
+    expect(unlocked()).toBe(true)
+    const pressed = player.getByRole('button', { name: /unlocked for 15 seconds/ })
+    expect(pressed.textContent).toMatch(/Tap “Skip” on the ad · 15/)
+
+    fireEvent.click(pressed) // lock again early
+    expect(unlocked()).toBe(false)
+
+    // A new song always starts locked.
+    fireEvent.click(player.getByRole('button', { name: /^Skip ad/ }))
+    fireEvent.click(results.getByRole('button', { name: 'Play Tadhana by Up Dharma Down now' }))
+    await waitFor(() => expect(unlocked()).toBe(false))
+  })
+
   it('Play Now keeps the queue; skip, reorder, remove, and clear work', async () => {
     renderApp()
     const results = await searchYouTube('opm')

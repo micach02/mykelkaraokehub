@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useKaraokePlayer } from '../../hooks/useKaraokePlayer'
 import { PlayerOverlay } from './PlayerOverlay'
+import { AdSkipUnlock, useVideoUnlock } from './AdSkipUnlock'
 import { PracticeStage } from '../scoring/PracticeStage'
 import { cx } from '../../utils/classNames'
 
@@ -37,12 +38,21 @@ export function KaraokePlayer({
     return onRegister({ play, pause, stop, seek, setGuideEnabled, retry, getProgress })
   }, [onRegister, play, pause, stop, seek, setGuideEnabled, retry, getProgress])
 
+  // The video is watch-only; "⏭ Skip ad" briefly lets taps through to it.
+  const unlock = useVideoUnlock(entryId)
+  const showAdSkip = Boolean(song) && engineKind === 'youtube' && ['playing', 'buffering', 'paused'].includes(status)
+
   return (
     <div className={cx('karaoke-player', `karaoke-player--${status}`)}>
       <div
         ref={containerRef}
-        className={cx('karaoke-player__video', engineKind !== 'youtube' && 'karaoke-player__video--hidden')}
+        className={cx(
+          'karaoke-player__video',
+          engineKind !== 'youtube' && 'karaoke-player__video--hidden',
+          unlock.unlocked && 'karaoke-player__video--unlocked',
+        )}
       />
+      {showAdSkip && <AdSkipUnlock {...unlock} />}
       {song && engineKind === 'practice' && <PracticeStage song={song} getProgress={getProgress} />}
       <PlayerOverlay
         song={song}
