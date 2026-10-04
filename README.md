@@ -172,6 +172,31 @@ Melody data lives in [`src/data/referenceMelodies/`](src/data/referenceMelodies/
 
 ---
 
+## Deploy online (GitHub Pages + Render)
+
+The app can also run on the internet, so it works without a computer at home:
+
+| Part | Where | What it does |
+| --- | --- | --- |
+| Web app | **GitHub Pages**: https://micach02.github.io/mykelkaraokehub/ | The pages you see. Built and published automatically on every push to `main` ([workflow](.github/workflows/deploy-pages.yml)). |
+| Karaoke server | **Render** (free plan): https://mykelkaraokehub.onrender.com | YouTube search (holds the API key) and phone-remote rooms. Runs `node server/index.js` ([render.yaml](render.yaml)). |
+
+**One-time setup**
+
+1. **Render:** sign in at [render.com](https://render.com) with GitHub. Choose **New → Blueprint**, pick this repository, and enter your `YOUTUBE_API_KEY` when asked. It deploys the server. Note its address; if it isn't `https://mykelkaraokehub.onrender.com`, do step 3.
+2. **GitHub Pages:** in the repository, open **Settings → Pages** and set **Source** to **GitHub Actions**. Then re-run the latest **Deploy to GitHub Pages** workflow (**Actions** tab), or push any change.
+3. *(Only if the Render address differs)*: open **Settings → Secrets and variables → Actions → Variables** and add `API_BASE_URL` = your Render address. Then re-run the workflow.
+
+**How it differs from running at home**
+
+- **Phones join from anywhere.** The QR code links to the public site, so the phone doesn't need the same Wi-Fi.
+- **Scoring works on any device with a mic**, because the site uses HTTPS.
+- **The free server sleeps after about 15 minutes idle.** The first visit then takes about a minute to wake it ("Can't reach the karaoke server… waking up"), and open rooms reset. The TV starts a new room by itself; scan the new QR code.
+- **Limits to protect your quota:** only the Pages site may call the server from a browser (`ALLOWED_ORIGINS`). Each visitor (IP address) gets at most 200 YouTube searches and 20 new rooms per hour, on top of the daily quota guard.
+- **The search cache resets** when the server restarts or redeploys.
+
+---
+
 ## YouTube quota
 
 YouTube gives each key **10,000 units per day**, and each search costs **100**, so about **100 searches a day**. The app is built around that:
@@ -275,7 +300,7 @@ src/
 
 ## Testing
 
-`npm test` runs **126 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
+`npm test` runs **129 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
 
 - **Server**: karaoke filtering and title cleanup (with artist aliases), the shared cache (including saving to disk), the quota guard, key errors, rooms and command validation, and a real HTTP + SSE round trip (phone command → TV stream, TV state → phone stream).
 - **Queue logic**: Play Now, add, duplicates, auto-start, remove, reorder, skip, song ended, stale events, clear, volume, restore, requester tracking, and dropping old placeholder songs.

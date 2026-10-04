@@ -30,9 +30,12 @@ function TvApp() {
   )
 }
 
+// The folder the app is served from: '/' locally, '/mykelkaraokehub' on GitHub Pages.
+const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={ROUTER_BASENAME}>
       <ToastProvider>
         <Routes>
           {/* Phone remote: its own lightweight page, no player. */}

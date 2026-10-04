@@ -2,9 +2,9 @@
   "name": "myKelKaraokeHub",
   "short_name": "myKel Karaoke",
   "description": "Your Songs. Your Queue. Your Karaoke.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#05050b",
   "theme_color": "#05050b",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
 }

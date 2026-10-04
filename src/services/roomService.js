@@ -3,7 +3,7 @@
 // Transport: plain HTTP POSTs for sending, Server-Sent Events (EventSource)
 // for receiving. EventSource reconnects on its own after Wi-Fi hiccups.
 
-import { apiGet, apiPost } from './apiClient'
+import { apiGet, apiPost, apiUrl } from './apiClient'
 import { getItem, setItem, removeItem, STORAGE_KEYS } from './storageService'
 import { createId } from '../utils/id'
 
@@ -36,7 +36,7 @@ export function sendRoomCommand(code, command) {
 export function openRoomEvents(code, { role, hostToken }, handlers) {
   const params = new URLSearchParams({ role })
   if (hostToken) params.set('token', hostToken)
-  const source = new EventSource(`${roomPath(code)}/events?${params}`)
+  const source = new EventSource(apiUrl(`${roomPath(code)}/events?${params}`))
   Object.entries(handlers).forEach(([name, handler]) => {
     if (name === 'onOpen' || name === 'onError') return
     source.addEventListener(name, (event) => {
@@ -53,12 +53,13 @@ export function openRoomEvents(code, { role, hostToken }, handlers) {
 }
 
 // The URL phones open. Uses the computer's Wi-Fi address when the TV page
-// was opened as "localhost" (phones can't reach "localhost").
+// was opened as "localhost" (phones can't reach "localhost"). Includes the
+// app's base path when it's hosted in a folder (GitHub Pages: /mykelkaraokehub/).
 export function getJoinUrl(code, lanOrigin) {
   const { hostname, origin } = window.location
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
   const base = isLocal && lanOrigin ? lanOrigin : origin
-  return `${base}/remote/${encodeURIComponent(code)}`
+  return `${base}${import.meta.env.BASE_URL}remote/${encodeURIComponent(code)}`
 }
 
 // ---- TV: remember the room across refreshes ----

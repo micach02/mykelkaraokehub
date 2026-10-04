@@ -1,0 +1,22 @@
+# Render Blueprint for the karaoke server (YouTube search + phone rooms).
+# Render → New → Blueprint → pick this repository. You'll be asked for
+# YOUTUBE_API_KEY; it stays on Render and is never sent to browsers.
+
+services:
+  - type: web
+    name: mykelkaraokehub
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: YOUTUBE_API_KEY
+        sync: false
+      # The GitHub Pages site that may call this server from browsers.
+      - key: ALLOWED_ORIGINS
+        value: https://micach02.github.io

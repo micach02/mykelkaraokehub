@@ -4,6 +4,9 @@ import { karaokeServerPlugin } from './server/vitePlugin.js'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // The folder the app is served from. '/' locally; the GitHub Pages build sets
+  // VITE_BASE_PATH=/mykelkaraokehub/ (see .github/workflows/deploy-pages.yml).
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     react(),
     // API + phone-remote rooms, served from the same address as the app.
