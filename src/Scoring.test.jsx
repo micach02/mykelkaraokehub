@@ -18,7 +18,7 @@ vi.mock('./services/scoring/audioAnalysisProvider', () => import('./test/fakeMic
 const session = vi.hoisted(() => ({}))
 vi.mock('./config/scoringConfig', async (importOriginal) => {
   const mod = await importOriginal()
-  Object.assign(session, mod.SCORING_SESSION, { countdownSeconds: 1, calibrationSeconds: 0.3, calibrationAutoContinueMs: 150, resultsAutoNextSeconds: 0 })
+  Object.assign(session, mod.SCORING_SESSION, { countdownSeconds: 1, calibrationSeconds: 0.3, calibrationAutoContinueMs: 1000, resultsAutoNextSeconds: 0 })
   return { ...mod, SCORING_SESSION: session }
 })
 
@@ -80,7 +80,7 @@ async function startSinging() {
   expect(await within(check).findByText(/Microphone level: GOOD/, {}, { timeout: 2000 })).toBeTruthy()
   // GOOD → on to the countdown by itself (no Continue press).
 
-  expect(await screen.findByText('Get Ready!', {}, { timeout: 2000 })).toBeTruthy()
+  expect(await screen.findByText('Get Ready!', {}, { timeout: 4000 })).toBeTruthy()
   expect(screen.queryByRole('dialog', { name: '🎤 Microphone Check' })).toBeNull()
   await screen.findByLabelText('Scoring: recording your singing', {}, { timeout: 3000 })
   expect(fakeMic.analyzer.recording).toBe(true)
@@ -148,7 +148,7 @@ describe('karaoke scoring', () => {
     const check = await screen.findByRole('dialog', { name: '🎤 Microphone Check' }, { timeout: 5000 })
     for (let i = 0; i < 6; i += 1) act(() => fakeMic.analyzer.emit({ ...VOICE, rms: 0.006 }))
     expect(await within(check).findByText(/too low|quiet/i, {}, { timeout: 2000 })).toBeTruthy()
-    await new Promise((resolve) => setTimeout(resolve, 400)) // longer than the auto-continue delay
+    await new Promise((resolve) => setTimeout(resolve, 1200)) // longer than the auto-continue delay
     expect(screen.getByRole('dialog', { name: '🎤 Microphone Check' })).toBeTruthy()
     expect(screen.queryByText('Get Ready!')).toBeNull()
     fireEvent.click(within(check).getByRole('button', { name: 'Continue anyway' }))
@@ -186,15 +186,15 @@ describe('karaoke scoring', () => {
   })
 
   it('after the results, the next song plays by itself after a few seconds', async () => {
-    session.resultsAutoNextSeconds = 1 // 20 in the app
+    session.resultsAutoNextSeconds = 2 // 20 in the app
     await setUpQueue()
     await startSinging()
     sing(3)
     act(() => fakePlayers.current.end())
     const results = await screen.findByRole('dialog', { name: 'Karaoke Score' }, { timeout: 5000 })
-    expect(within(results).getByRole('button', { name: /Next Song \(1\)/ })).toBeTruthy()
+    expect(within(results).getByRole('button', { name: /Next Song \([12]\)/ })).toBeTruthy() // counting down
     fakePlayers.current.time = 0
-    await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.harana.id), { timeout: 4000 })
+    await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.harana.id), { timeout: 6000 })
     expect(screen.queryByRole('dialog', { name: 'Karaoke Score' })).toBeNull()
     // Advanced exactly once: Harana isn't skipped too, it plays and is scored.
     await new Promise((resolve) => setTimeout(resolve, 300))

@@ -142,6 +142,45 @@
   font-size: 1rem; /* 16px+ stops iOS from zooming in */
 }
 
+.remote-add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Join screen: name first, then songs */
+.remote-join {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 0 48px;
+  text-align: center;
+}
+
+.remote-join__icon {
+  font-size: 3rem;
+}
+
+.remote-join__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.remote-join__text {
+  padding: 0 24px;
+  color: var(--text-muted);
+}
+
+.remote-join__text strong {
+  color: var(--text);
+}
+
+.remote-join .remote-name {
+  text-align: left;
+}
+
 .remote-name__skip {
   padding: 0 10px;
   border: 0;

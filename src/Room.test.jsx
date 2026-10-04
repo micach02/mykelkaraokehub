@@ -135,12 +135,26 @@ describe('Phone Remote — phone side', () => {
     return phone
   }
 
+  // The join screen: a name is required before choosing songs.
+  function join(name = 'Mika') {
+    fireEvent.change(screen.getByRole('textbox', { name: /What's your name/ }), { target: { value: name } })
+    fireEvent.click(screen.getByRole('button', { name: 'Join' }))
+  }
+
   it('shows the TV queue, searches YouTube, and adds songs', async () => {
     await openRemote()
-    // Name prompt, shown on the TV next to your songs.
-    fireEvent.change(screen.getByRole('textbox', { name: /What's your name/ }), { target: { value: 'Mika' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    // After scanning: a name first (it shows on the TV next to your songs).
+    expect(screen.getByRole('heading', { name: 'Join the karaoke' })).toBeTruthy()
+    expect(screen.getByText('Buwan', { selector: 'strong' })).toBeTruthy() // what's playing on the TV
+    expect(screen.queryByRole('searchbox', { name: 'Search songs' })).toBeNull() // no songs yet
+    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull() // can't skip it
+    const joinButton = screen.getByRole('button', { name: 'Join' })
+    expect(joinButton.disabled).toBe(true)
+    fireEvent.change(screen.getByRole('textbox', { name: /What's your name/ }), { target: { value: '   ' } })
+    expect(joinButton.disabled).toBe(true) // spaces aren't a name
+    join('Mika')
     expect(screen.getByRole('button', { name: /Mika ✎/ })).toBeTruthy()
+    expect(JSON.parse(window.localStorage.getItem('mykelkaraokehub:v1:remote-identity')).name).toBe('Mika')
 
     const now = within(screen.getByRole('region', { name: 'Now playing' }))
     expect(now.getByText('Buwan')).toBeTruthy()
@@ -169,7 +183,7 @@ describe('Phone Remote — phone side', () => {
 
   it('controls playback and manages your own queued songs', async () => {
     await openRemote()
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    join()
     fireEvent.click(screen.getByRole('button', { name: 'Skip to the next song' }))
     fireEvent.click(screen.getByRole('button', { name: 'Pause on TV' }))
 
@@ -184,7 +198,7 @@ describe('Phone Remote — phone side', () => {
 
   it('blocks adding a song that is already queued', async () => {
     await openRemote()
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    join()
     const search = screen.getByRole('searchbox', { name: 'Search songs' })
     fireEvent.change(search, { target: { value: 'buwan' } })
     fireEvent.submit(search.closest('form'))
@@ -197,7 +211,7 @@ describe('Phone Remote — phone side', () => {
 
   it('shows the TV\'s recently sung songs and live results without pressing Search', async () => {
     await openRemote()
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    join()
     const recent = within(screen.getByRole('list', { name: 'Recently sung' }))
     fireEvent.click(recent.getByRole('button', { name: 'Add Ang Huling El Bimbo to the queue' }))
     expect(await screen.findByText('✓ Added “Ang Huling El Bimbo”')).toBeTruthy()
@@ -214,7 +228,7 @@ describe('Phone Remote — phone side', () => {
 
   it('lets anyone in the room invite friends: QR on the phone, share, copy, and messaging links', async () => {
     await openRemote()
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    join()
     // The room code in the header opens the Invite tab too.
     fireEvent.click(screen.getByRole('button', { name: 'Room MKH-ABCDEF. Invite friends' }))
 
@@ -246,7 +260,7 @@ describe('Phone Remote — phone side', () => {
     Object.defineProperty(navigator, 'share', { value: share, configurable: true })
     try {
       await openRemote()
-      fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+      join()
       fireEvent.click(screen.getByRole('button', { name: /Invite/, pressed: false }))
       const invite = within(screen.getByRole('region', { name: 'Invite friends' }))
       await invite.findByText('http://192.168.1.50:5173/remote/MKH-ABCDEF')
@@ -266,6 +280,8 @@ describe('Phone Remote — phone side', () => {
   it('warns when the TV is offline', async () => {
     const phone = await openRemote()
     act(() => phone.emit('presence', { hostOnline: false, remotes: 1 }))
+    expect(screen.getByText(/The TV isn't connected/)).toBeTruthy() // already on the join screen
+    join()
     expect(screen.getByText(/The TV isn't connected/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Skip to the next song' }).disabled).toBe(true)
   })

@@ -24,7 +24,7 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
   - play/pause and skip
   - remove songs they added
   - **invite more friends** from the 📤 Invite tab: show a QR code on their own phone for others to scan, or send the link with Share, Copy link, Messenger, Viber, WhatsApp, or Text message. On plain `http://` home-network addresses, phones often disable the built-in share sheet and clipboard, so the QR code and messaging links are the reliable options, and Copy falls back to a method that works without HTTPS.
-  - enter a name. Every song they add shows a **🎤 Mika** badge in the TV queue, in Now Playing and Up next (including Karaoke Mode), and on every phone. Phones that skip the name show as **Guest**, and your own songs show as **You** on your phone.
+  - **enter their name first.** After scanning, a phone shows **Join the karaoke** and asks for a name before any songs appear; the name can't be skipped or left blank. It's remembered on the phone, and the 🎤 name button changes it. Every song they add shows a **🎤 Mika** badge in the TV queue, in Now Playing and Up next (including Karaoke Mode), and on every phone. Your own songs show as **You** on your phone.
 - **🎯 Karaoke Score** (optional): with **Auto-score** on (the default), scoring and recording start by themselves whenever a song starts, with no button to press. The app listens through your microphone, analyzes your voice **locally in the browser**, and when the song ends shows your final score out of 100, your stats, and your recording to play back or save. The next song plays automatically after 20 seconds. Nothing is uploaded. [How it works](#-karaoke-score).
 - **Queue**: add, Play Now, remove, reorder (drag and drop, ▲/▼, or ☰ plus arrow keys), skip, clear (asks first), and duplicate protection. **The next song plays automatically.**
 - **Karaoke Mode** (`/karaoke`) for a TV: maximized player, large controls, now playing and up next, a song picker, the queue, a QR card in the corner, fullscreen, and keyboard shortcuts.
@@ -310,7 +310,7 @@ src/
   - the session: song clock, pause, scoring a whole song or part of one
   - personal bests
   - the full flow with a fake microphone: Auto-score (first song, next songs, Stop → Play, "Not now", off, turning it on mid-song), permission, mic check, countdown, results, the auto-next countdown, Next Song, Sing Again, songs nobody sang, skip mid-song, a blocked microphone, and unsupported browsers
-- **Phone remote**: creating a room with the QR code and Wi-Fi URL; TV applying phone commands (only removing the phone's own songs); TV publishing state; the phone's name prompt, saved songs, search and add, playback controls, queue, duplicate blocking, and the room-ended and TV-offline states.
+- **Phone remote**: creating a room with the QR code and Wi-Fi URL; TV applying phone commands (only removing the phone's own songs); TV publishing state; the phone's required name (join screen), saved songs, search and add, playback controls, queue, duplicate blocking, and the room-ended and TV-offline states.
 
 ---
 

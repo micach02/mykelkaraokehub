@@ -38,7 +38,7 @@ export default function Remote() {
   const { show } = useToast()
   const [tab, setTab] = useState('search')
   const [pending, setPending] = useState(() => new Set())
-  const [nameOpen, setNameOpen] = useState(!identity.name)
+  const [nameOpen, setNameOpen] = useState(false)
   useDocumentTitle(`Remote ${code}`)
 
   const queue = room?.queue ?? []
@@ -91,6 +91,31 @@ export default function Remote() {
     )
   }
   if (connection === 'connecting' && !room) return <Loading fullscreen label="Joining the karaoke room…" />
+
+  // First visit: a name is required before choosing songs (it shows on the
+  // TV next to each song). Remembered on this phone for next time.
+  if (!identity.name) {
+    return (
+      <div className="remote remote--join">
+        <header className="remote__header">
+          <span className="remote__brand">
+            {BRAND.logoIcon} <span className="remote__brand-name">{BRAND.displayName}</span>
+          </span>
+          <span className={cx('remote__status', connection === 'live' && !tvOffline && 'remote__status--live')}>{code}</span>
+        </header>
+        {tvOffline && <p className="remote__banner" role="status">📺 The TV isn't connected. Open myKel Karaoke on the TV.</p>}
+        <main className="remote-join">
+          <p className="remote-join__icon" aria-hidden="true">🎤</p>
+          <h1 className="remote-join__title">Join the karaoke</h1>
+          <p className="remote-join__text">
+            Enter your name to start adding songs.
+            {room?.nowPlaying && <> Now playing: <strong>{room.nowPlaying.song.title}</strong></>}
+          </p>
+          <RemoteNameForm onSave={setName} submitLabel="Join" autoFocus />
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="remote">
