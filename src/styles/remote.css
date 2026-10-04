@@ -104,6 +104,48 @@
   color: var(--text-muted);
 }
 
+.remote-hint {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+/* Score screen on the TV, mirrored on the phone */
+.remote-now--results {
+  border-color: rgba(252, 209, 22, 0.35);
+}
+
+.remote-score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0;
+  font-weight: 800;
+}
+
+.remote-score__number {
+  font-size: 1.6rem;
+  line-height: 1;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.remote-score__grade {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.remote-control.remote-control--next {
+  flex: 2;
+  padding: 0 14px;
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 /* Name */
 .remote-name {
   margin: 12px 16px 0;

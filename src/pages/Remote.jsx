@@ -34,7 +34,7 @@ function RemoteMessage({ icon, title, text, action }) {
 // The page phones open after scanning the TV's QR code.
 export default function Remote() {
   const { code } = useParams()
-  const { identity, setName, room, connection, hostOnline, send, retry } = useRemoteRoom(code)
+  const { identity, setName, room, sungSongs, connection, hostOnline, send, retry } = useRemoteRoom(code)
   const { show } = useToast()
   const [tab, setTab] = useState('search')
   const [pending, setPending] = useState(() => new Set())
@@ -157,8 +157,10 @@ export default function Remote() {
           isPlaying={Boolean(room?.isPlaying)}
           next={queue[0] ?? null}
           myId={identity.id}
+          results={room?.results ?? null}
+          receivedAt={room?.receivedAt}
           onTogglePlay={() => run(COMMANDS.TOGGLE_PLAY)}
-          onSkip={() => run(COMMANDS.SKIP_SONG, {}, 'Skipped')}
+          onSkip={() => run(COMMANDS.SKIP_SONG, {}, room?.results ? '⏭ Next song' : 'Skipped')}
           disabled={tvOffline || !room?.nowPlaying}
         />
       )}
@@ -167,7 +169,8 @@ export default function Remote() {
         {tab === 'search' && (
           <RemoteSearch
             savedSongs={room?.savedSongs}
-            recentSongs={room?.recentSongs}
+            sungSongs={sungSongs}
+            singerName={identity.name}
             songState={songState}
             onAdd={addSong}
             disabled={tvOffline}

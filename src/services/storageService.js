@@ -79,6 +79,7 @@ export const STORAGE_KEYS = {
   autoScore: 'auto-score',
   hostedRoom: 'hosted-room',
   remoteIdentity: 'remote-identity',
+  remoteSungSongs: 'remote-sung-songs',
 }
 
 // For tests.

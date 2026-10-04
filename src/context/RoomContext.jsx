@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useKaraokeActions, useKaraokeState } from './KaraokeContext'
 import { useToast } from './ToastContext'
+import { useOptionalScoring } from './ScoringContext'
 import { useLibrarySongs } from '../hooks/useLibrary'
 import { useRecentSongs } from '../hooks/useRecentSongs'
 import { useServerStatus } from '../hooks/useServerStatus'
@@ -20,7 +21,22 @@ const RoomContext = createContext(null)
 const MAX_SAVED_SONGS_SHARED = 100
 const MAX_RECENT_SONGS_SHARED = 30
 
-// What phones see: the TV's now playing, queue, saved and recent songs.
+// The score screen, for phones. autoNextAt (TV clock) becomes nextInSeconds
+// when published, so phones count down on their own clock.
+function buildResults(scoring) {
+  if (scoring?.phase !== 'results' || !scoring.results) return null
+  const { result, song } = scoring.results
+  return {
+    song: { title: song.title, artist: song.artist },
+    score: result.totalScore,
+    grade: result.gradeInfo.label,
+    emoji: result.gradeInfo.emoji,
+    autoNextAt: scoring.autoNextAt ?? null,
+  }
+}
+
+// What phones see: the TV's now playing, queue, saved and recent songs. (The
+// score screen, while it's up, is added as `results`.)
 function buildSnapshot(karaoke, library, recent) {
   return {
     nowPlaying: karaoke.currentSong
@@ -51,6 +67,11 @@ export function RoomHostProvider({ children }) {
   const recent = useRecentSongs()
   const { show } = useToast()
   const { lanOrigins } = useServerStatus()
+  const scoring = useOptionalScoring()
+  const scoringRef = useRef(scoring)
+  useLayoutEffect(() => {
+    scoringRef.current = scoring
+  }, [scoring])
 
   const [room, setRoom] = useState(() => loadHostedRoom())
   const [status, setStatus] = useState(() => (loadHostedRoom() ? 'connecting' : 'idle'))
@@ -124,13 +145,17 @@ export function RoomHostProvider({ children }) {
         break
       }
       case COMMANDS.SKIP_SONG:
-        if (current.currentSong) {
+        // On the score screen, ⏭ on a phone is the screen's Next Song button.
+        if (scoringRef.current?.phase === 'results') {
+          scoringRef.current.nextSong()
+          show(`📱 ${who}: next song`, { variant: 'info' })
+        } else if (current.currentSong) {
           actions.skipSong()
           show(`📱 ${who} skipped “${current.currentSong.title}”`, { variant: 'info' })
         }
         break
       case COMMANDS.TOGGLE_PLAY:
-        if (current.currentSong) actions.togglePlay()
+        if (current.currentSong && scoringRef.current?.phase !== 'results') actions.togglePlay()
         break
       default:
         break
@@ -171,12 +196,18 @@ export function RoomHostProvider({ children }) {
   }, [room, replaceRoom])
 
   // ---- Publish the queue to phones ----
-  const snapshot = useMemo(() => buildSnapshot(karaoke, library, recent), [karaoke, library, recent])
+  const results = useMemo(() => buildResults(scoring), [scoring])
+  const snapshot = useMemo(() => ({ ...buildSnapshot(karaoke, library, recent), results }), [karaoke, library, recent, results])
   const snapshotKey = JSON.stringify(snapshot)
   useEffect(() => {
     if (!room || status !== 'live') return undefined
     const timer = window.setTimeout(() => {
-      publishRoomState(room.code, room.hostToken, JSON.parse(snapshotKey)).catch((err) => {
+      const state = JSON.parse(snapshotKey)
+      if (state.results) {
+        const { autoNextAt, ...rest } = state.results
+        state.results = { ...rest, nextInSeconds: autoNextAt ? Math.max(0, Math.round((autoNextAt - Date.now()) / 1000)) : null }
+      }
+      publishRoomState(room.code, room.hostToken, state).catch((err) => {
         if (err.status === 404) replaceRoom()
       })
     }, ROOM_CONFIG.publishThrottleMs)

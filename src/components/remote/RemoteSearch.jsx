@@ -44,7 +44,8 @@ function RowSkeletons({ count = 4 }) {
 
 // Search tab of the phone remote. Results appear as you type (live search);
 // Search ↵ forces a fresh YouTube search.
-export function RemoteSearch({ savedSongs = EMPTY, recentSongs = EMPTY, songState, onAdd, disabled }) {
+// sungSongs: what this person sang (not everyone's), for one-tap re-adding.
+export function RemoteSearch({ savedSongs = EMPTY, sungSongs = EMPTY, singerName = '', songState, onAdd, disabled }) {
   const [query, setQuery] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('')
   const trimmed = query.trim()
@@ -53,15 +54,15 @@ export function RemoteSearch({ savedSongs = EMPTY, recentSongs = EMPTY, songStat
   const submitted = Boolean(submittedQuery) && submittedQuery === trimmed
   const youtube = useYouTubeSearch(submitted ? trimmed : liveQuery, { mode: submitted ? 'full' : 'live' })
   const recentSearches = useRecentSearches()
-  const suggestions = useMemo(() => getSuggestions(recentSongs), [recentSongs])
+  const suggestions = useMemo(() => getSuggestions(sungSongs), [sungSongs])
 
-  // Instant matches from the TV's saved + recently sung songs (no network).
+  // Instant matches from your sung songs + the TV's saved songs (no network).
   const instantMatches = useMemo(() => {
     if (!instantQuery) return EMPTY
     const byId = new Map()
-    ;[...savedSongs, ...recentSongs].forEach((song) => byId.has(song.id) || byId.set(song.id, song))
+    ;[...sungSongs, ...savedSongs].forEach((song) => byId.has(song.id) || byId.set(song.id, song))
     return searchSavedSongs(instantQuery, [...byId.values()])
-  }, [instantQuery, savedSongs, recentSongs])
+  }, [instantQuery, savedSongs, sungSongs])
 
   const searchFor = (text) => {
     setQuery(text)
@@ -86,11 +87,11 @@ export function RemoteSearch({ savedSongs = EMPTY, recentSongs = EMPTY, songStat
       {!trimmed && (
         <>
           <QuickSearchChips items={suggestions} onSelect={searchFor} label="Suggestions" variant="glow" />
-          {recentSongs.length > 0 && (
-            <>
-              <h2 className="remote-heading">🕘 Recently sung</h2>
-              <SongList songs={recentSongs} label="Recently sung" {...listProps} />
-            </>
+          <h2 className="remote-heading">🕘 Recently sung{singerName ? ` by ${singerName}` : ''}</h2>
+          {sungSongs.length > 0 ? (
+            <SongList songs={sungSongs} label="Your recently sung songs" {...listProps} />
+          ) : (
+            <p className="remote-hint">Songs you sing show up here, so you can add them again in one tap.</p>
           )}
           {savedSongs.length > 0 && (
             <>

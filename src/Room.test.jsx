@@ -196,6 +196,29 @@ describe('Phone Remote — phone side', () => {
     expect(commands()[2].payload).toEqual({ entryId: 'e1' })
   })
 
+  it('shows the TV\'s score screen with its countdown; ⏭ goes to the next song', async () => {
+    const phone = await openRemote()
+    join()
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.buwan, requestedBy: { id: me.id, name: 'Mika' } },
+      isPlaying: false,
+      queue: [{ entryId: 'e2', song: SONGS.harana, requestedBy: { id: 'phone-jo', name: 'Jo' } }],
+      savedSongs: [],
+      recentSongs: [],
+      results: { song: { title: 'Buwan', artist: 'Juan Karlos' }, score: 92, grade: 'EXCELLENT', emoji: '🌟', nextInSeconds: 15 },
+    }))
+    const card = within(screen.getByRole('region', { name: 'Karaoke score' }))
+    expect(card.getByLabelText('Score 92 out of 100, EXCELLENT')).toBeTruthy()
+    expect(card.getByText(/Up next: Harana · starts in 1[45]s/)).toBeTruthy()
+    const next = card.getByRole('button', { name: /Next song now \(starts by itself in 1[45] seconds\)/ })
+    expect(next.textContent).toMatch(/Next song \(1[45]\)/)
+    expect(screen.queryByRole('button', { name: 'Pause on TV' })).toBeNull()
+
+    fireEvent.click(next)
+    expect(await screen.findByText('⏭ Next song')).toBeTruthy()
+    await waitFor(() => expect(commands().map((c) => c.type)).toEqual(['SKIP_SONG']))
+  })
+
   it('blocks adding a song that is already queued', async () => {
     await openRemote()
     join()
@@ -209,21 +232,39 @@ describe('Phone Remote — phone side', () => {
     expect(commands()).toEqual([])
   })
 
-  it('shows the TV\'s recently sung songs and live results without pressing Search', async () => {
-    await openRemote()
+  it('shows the songs this person sang (not everyone\'s) and live results without pressing Search', async () => {
+    const phone = await openRemote()
     join()
-    const recent = within(screen.getByRole('list', { name: 'Recently sung' }))
-    fireEvent.click(recent.getByRole('button', { name: 'Add Ang Huling El Bimbo to the queue' }))
-    expect(await screen.findByText('✓ Added “Ang Huling El Bimbo”')).toBeTruthy()
+    // Nothing sung yet by Mika. (The TV's own history, e.g. El Bimbo, isn't shown.)
+    expect(screen.getByRole('heading', { name: /Recently sung by Mika/ })).toBeTruthy()
+    expect(screen.getByText(/Songs you sing show up here/)).toBeTruthy()
+    expect(screen.queryByText('Ang Huling El Bimbo')).toBeNull()
+
+    // Mika's song starts on the TV → it's in Mika's recently sung songs.
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.harana, requestedBy: { id: me.id, name: 'Mika' } },
+      isPlaying: true, queue: [], savedSongs: [], recentSongs: [SONGS.elBimbo, SONGS.harana],
+    }))
+    const recent = within(await screen.findByRole('list', { name: 'Your recently sung songs' }))
+    expect(recent.getByText('Harana')).toBeTruthy()
+    expect(recent.queryByText('Ang Huling El Bimbo')).toBeNull()
+    expect(JSON.parse(window.localStorage.getItem('mykelkaraokehub:v1:remote-sung-songs')).map((x) => x.title)).toEqual(['Harana'])
+
+    // Someone else's song playing doesn't count.
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.tadhana, requestedBy: { id: 'phone-jo', name: 'Jo' } },
+      isPlaying: true, queue: [], savedSongs: [], recentSongs: [],
+    }))
+    expect(within(screen.getByRole('list', { name: 'Your recently sung songs' })).queryByText('Tadhana')).toBeNull()
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search songs' }), { target: { value: 'Kathang Isip' } })
     const results = within(await screen.findByRole('list', { name: 'YouTube karaoke results' }, { timeout: 3000 }))
     expect(results.getByText('Kathang Isip')).toBeTruthy()
     expect(searchCalls(server.calls, 'live')).toEqual(['Kathang Isip'])
 
-    // Typing also matches the TV's own songs instantly.
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Search songs' }), { target: { value: 'bimbo' } })
-    expect(within(await screen.findByRole('list', { name: 'Matching songs' })).getByText('Ang Huling El Bimbo')).toBeTruthy()
+    // Typing also matches your sung songs instantly.
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search songs' }), { target: { value: 'haran' } })
+    expect(within(await screen.findByRole('list', { name: 'Matching songs' })).getByText('Harana')).toBeTruthy()
   })
 
   it('lets anyone in the room invite friends: QR on the phone, share, copy, and messaging links', async () => {

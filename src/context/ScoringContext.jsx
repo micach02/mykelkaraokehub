@@ -334,6 +334,38 @@ export function ScoringProvider({ children }) {
   }, [results, startSinging])
 
   const nextSong = useCallback(() => closeResults({ advance: true }), [closeResults])
+  const nextSongRef = useRef(nextSong)
+  useLayoutEffect(() => {
+    nextSongRef.current = nextSong
+  }, [nextSong])
+
+  // ---- Results: the next song starts by itself after a few seconds ----
+  // autoNextAt: when (ms timestamp), or null: no next song in the queue,
+  // turned off in the config, or someone tapped the results to read them.
+  // Phones show the same countdown (see RoomContext).
+  const [autoNextAt, setAutoNextAt] = useState(null)
+  const autoNextStoppedRef = useRef(false)
+  const hasNextSong = karaoke.queue.length > 0
+  useEffect(() => {
+    const seconds = SCORING_SESSION.resultsAutoNextSeconds
+    if (phase !== 'results') autoNextStoppedRef.current = false
+    if (phase !== 'results' || !hasNextSong || seconds <= 0 || autoNextStoppedRef.current) {
+      setAutoNextAt(null)
+      return
+    }
+    setAutoNextAt((at) => at ?? Date.now() + seconds * 1000)
+  }, [phase, hasNextSong])
+
+  useEffect(() => {
+    if (autoNextAt == null) return undefined
+    const timer = window.setTimeout(() => nextSongRef.current(), Math.max(0, autoNextAt - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [autoNextAt])
+
+  const stopAutoNext = useCallback(() => {
+    autoNextStoppedRef.current = true
+    setAutoNextAt(null)
+  }, [])
   const backToSongs = useCallback(() => {
     closeResults({ advance: true })
     navigate('/')
@@ -360,9 +392,11 @@ export function ScoringProvider({ children }) {
     cancel,
     singAgain,
     nextSong,
+    autoNextAt,
+    stopAutoNext,
     backToSongs,
     dismissResults,
-  }), [phase, error, take, results, autoScore, setAutoScore, explainUnavailable, startSinging, openMicrophone, finishCalibration, beginSinging, handleSongEnded, cancel, singAgain, nextSong, backToSongs, dismissResults])
+  }), [phase, error, take, results, autoNextAt, stopAutoNext, autoScore, setAutoScore, explainUnavailable, startSinging, openMicrophone, finishCalibration, beginSinging, handleSongEnded, cancel, singAgain, nextSong, backToSongs, dismissResults])
 
   return <ScoringContext.Provider value={value}>{children}</ScoringContext.Provider>
 }

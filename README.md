@@ -21,7 +21,8 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
 - **📱 Phone Remote.** The TV shows a QR code. Phones on the same Wi-Fi scan it, no app needed, and can:
   - search YouTube and add songs to the TV's queue
   - see what's playing and what's next
-  - play/pause and skip
+  - play/pause and skip. While the TV shows a song's **Karaoke Score**, the phone shows the score too, with the same "next song" countdown. Its **⏭ Next song** button works like the TV's Next Song button.
+  - see **their own recently sung songs** ("Recently sung by Mika"): songs they requested that played on the TV, kept on their phone for one-tap re-adding. Other people's songs aren't listed.
   - remove songs they added
   - **invite more friends** from the 📤 Invite tab: show a QR code on their own phone for others to scan, or send the link with Share, Copy link, Messenger, Viber, WhatsApp, or Text message. On plain `http://` home-network addresses, phones often disable the built-in share sheet and clipboard, so the QR code and messaging links are the reliable options, and Copy falls back to a method that works without HTTPS.
   - **enter their name first.** After scanning, a phone shows **Join the karaoke** and asks for a name before any songs appear; the name can't be skipped or left blank. It's remembered on the phone, and the 🎤 name button changes it. Every song they add shows a **🎤 Mika** badge in the TV queue, in Now Playing and Up next (including Karaoke Mode), and on every phone. Your own songs show as **You** on your phone.
@@ -231,7 +232,7 @@ React app (player + queue)               /remote/:code (search + add)
 - **The TV is the source of truth.** Phone commands (`ADD_TO_QUEUE`, `REMOVE_FROM_QUEUE`, `SKIP_SONG`, `TOGGLE_PLAY`) go to the TV, which applies them to its own queue through the same reducer actions the local UI uses, then publishes a snapshot back to the phones.
 - **Transport**: HTTP POST to send, Server-Sent Events to receive. It needs no extra dependencies and reconnects automatically after Wi-Fi hiccups. If the server restarts, the TV opens a new room automatically and tells you to share the new QR code.
 - **Security**: the TV needs a secret host token to publish its queue. Phones can only send the four commands above, with validated songs (real 11-character YouTube IDs, known fields only). Phones can only remove songs they added. The API key stays on the server.
-- **Player**: the official YouTube IFrame API, behind a small engine interface. If a browser blocks autoplay (e.g. the TV was refreshed and nobody has tapped it yet), a **▶ Play** button appears instead of loading forever.
+- **Player**: the official YouTube IFrame API, behind a small engine interface. The video is watch-only: YouTube's own controls and keyboard shortcuts are off, and taps and clicks on the video do nothing (no accidental pausing, YouTube links, or suggested videos). The app's controls and phone remotes run playback. If a browser blocks autoplay (e.g. the TV was refreshed and nobody has tapped it yet), a **▶ Play** button appears instead of loading forever.
 - **Scoring**: the microphone is analyzed in the browser (Web Audio API + [pitchy](https://github.com/ianprime0509/pitchy)). Nothing about it touches the server. See [Karaoke Score](#-karaoke-score).
 
 ### Project structure
@@ -300,7 +301,7 @@ src/
 
 ## Testing
 
-`npm test` runs **129 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
+`npm test` runs **131 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
 
 - **Server**: karaoke filtering and title cleanup (with artist aliases), the shared cache (including saving to disk), the quota guard, key errors, rooms and command validation, and a real HTTP + SSE round trip (phone command → TV stream, TV state → phone stream).
 - **Queue logic**: Play Now, add, duplicates, auto-start, remove, reorder, skip, song ended, stale events, clear, volume, restore, requester tracking, and dropping old placeholder songs.

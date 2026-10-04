@@ -36,9 +36,12 @@ export function createYouTubeAdapter(container, handlers) {
         player = new YT.Player(mount, {
           width: '100%',
           height: '100%',
+          // Watch-only: the app's controls drive playback (see karaoke.css,
+          // which also makes the video ignore taps and clicks).
           playerVars: {
             autoplay: 0,
-            controls: 1,
+            controls: 0,
+            disablekb: 1,
             rel: 0,
             playsinline: 1,
             modestbranding: 1,

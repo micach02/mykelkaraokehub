@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getRemoteIdentity, getRoomInfo, openRoomEvents, saveRemoteName, sendRoomCommand } from '../services/roomService'
+import { getRemoteIdentity, getRoomInfo, getSungSongs, openRoomEvents, recordSungSong, saveRemoteName, sendRoomCommand } from '../services/roomService'
 
 /**
  * Phone side of a karaoke room.
  *
  * connection: 'connecting' | 'live' | 'reconnecting' | 'not-found' | 'error'
- * room: the TV's latest snapshot { nowPlaying, isPlaying, queue, savedSongs }
+ * room: the TV's latest snapshot { nowPlaying, isPlaying, queue, savedSongs,
+ *       recentSongs, results } plus receivedAt (this phone's clock)
+ * sungSongs: songs this person sang (their requests that played), newest first
  */
 export function useRemoteRoom(code) {
   const [identity, setIdentity] = useState(getRemoteIdentity)
@@ -13,6 +15,7 @@ export function useRemoteRoom(code) {
   const [connection, setConnection] = useState('connecting')
   const [hostOnline, setHostOnline] = useState(null)
   const [attempt, setAttempt] = useState(0)
+  const [sungSongs, setSungSongs] = useState(getSungSongs)
 
   useEffect(() => {
     let disposed = false
@@ -25,7 +28,7 @@ export function useRemoteRoom(code) {
         setHostOnline(info.hostOnline)
         close = openRoomEvents(code, { role: 'remote' }, {
           onOpen: () => !disposed && setConnection('live'),
-          state: (snapshot) => setRoom(snapshot),
+          state: (snapshot) => setRoom({ ...snapshot, receivedAt: Date.now() }),
           presence: (presence) => setHostOnline(presence.hostOnline),
           onError: (source) => {
             if (disposed) return
@@ -51,6 +54,15 @@ export function useRemoteRoom(code) {
     }
   }, [code, attempt])
 
+  // My request started playing on the TV → it's one of my sung songs.
+  const playing = room?.nowPlaying
+  const mineNowPlaying = playing?.requestedBy?.id === identity.id ? playing.song : null
+  const mineNowPlayingId = mineNowPlaying?.id
+  useEffect(() => {
+    // Keyed by id: each new snapshot is a new object, but it's the same song.
+    if (mineNowPlaying) setSungSongs(recordSungSong(mineNowPlaying))
+  }, [mineNowPlayingId])
+
   const send = useCallback((type, payload = {}) => sendRoomCommand(code, { type, payload, from: identity }), [code, identity])
 
   const setName = useCallback((name) => setIdentity(saveRemoteName(name)), [])
@@ -59,6 +71,7 @@ export function useRemoteRoom(code) {
     identity,
     setName,
     room,
+    sungSongs,
     connection,
     hostOnline,
     send,

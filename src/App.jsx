@@ -16,16 +16,16 @@ const Karaoke = lazy(() => import('./pages/Karaoke'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const Remote = lazy(() => import('./pages/Remote'))
 
-// The TV/PC app: player, queue, the host side of phone-remote rooms, and
-// optional karaoke scoring.
+// The TV/PC app: player, queue, optional karaoke scoring, and the host side
+// of phone-remote rooms (which shows phones the score and its countdown).
 function TvApp() {
   return (
     <KaraokeProvider>
-      <RoomHostProvider>
-        <ScoringProvider>
+      <ScoringProvider>
+        <RoomHostProvider>
           <MainLayout />
-        </ScoringProvider>
-      </RoomHostProvider>
+        </RoomHostProvider>
+      </ScoringProvider>
     </KaraokeProvider>
   )
 }

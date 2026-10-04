@@ -54,6 +54,17 @@
   border: 0;
 }
 
+/* The video is for watching only: taps and clicks on it do nothing (no
+   pausing, no YouTube links or suggested videos). The app's own controls,
+   overlays, and phone remotes control playback. */
+.karaoke-player__video {
+  user-select: none;
+}
+
+.karaoke-player__video iframe {
+  pointer-events: none;
+}
+
 .karaoke-player__video--hidden {
   visibility: hidden;
 }

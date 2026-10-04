@@ -17,29 +17,23 @@ function fileNameFor(song, score) {
 // next song plays automatically after SCORING_SESSION.resultsAutoNextSeconds,
 // unless someone taps the results to read them.
 export function KaraokeResults() {
-  const { phase, results, singAgain, nextSong, backToSongs, dismissResults } = useScoring()
+  const { phase, results, singAgain, nextSong, backToSongs, dismissResults, autoNextAt, stopAutoNext } = useScoring()
   const { queue } = useKaraokeState()
   const open = phase === 'results' && Boolean(results)
   const hasNext = queue.length > 0
-  const autoSeconds = SCORING_SESSION.resultsAutoNextSeconds
-  const [secondsLeft, setSecondsLeft] = useState(null)
 
-  // At a party, keep the queue moving: continue automatically unless someone
-  // interacts with the results.
+  // The countdown itself runs in ScoringContext (phones show it too); this
+  // just redraws the seconds.
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
-    setSecondsLeft(open && hasNext && autoSeconds > 0 ? autoSeconds : null)
-  }, [open, hasNext, autoSeconds])
-
-  useEffect(() => {
-    if (secondsLeft == null) return undefined
-    if (secondsLeft <= 0) {
-      setSecondsLeft(null) // fire once
-      nextSong()
-      return undefined
-    }
-    const timer = window.setTimeout(() => setSecondsLeft((s) => (s == null ? s : s - 1)), 1000)
-    return () => window.clearTimeout(timer)
-  }, [secondsLeft, nextSong])
+    if (autoNextAt == null) return undefined
+    setNow(Date.now())
+    const timer = window.setInterval(() => setNow(Date.now()), 250)
+    return () => window.clearInterval(timer)
+  }, [autoNextAt])
+  const secondsLeft = autoNextAt == null
+    ? null
+    : Math.min(SCORING_SESSION.resultsAutoNextSeconds, Math.max(0, Math.ceil((autoNextAt - now) / 1000)))
 
   if (!open) return <Modal open={false} onClose={dismissResults} title="Results" />
   const { result, song, personalBest, recordingUrl } = results
@@ -47,7 +41,7 @@ export function KaraokeResults() {
 
   return (
     <Modal open={open} onClose={dismissResults} title="Karaoke Score" className="modal--results">
-      <div className="results" onPointerDown={() => setSecondsLeft(null)}>
+      <div className="results" onPointerDown={stopAutoNext}>
         <p className="results__song">{song.title} · {song.artist}</p>
 
         <div className="results__hero">

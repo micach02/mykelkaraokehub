@@ -90,6 +90,23 @@ export function saveRemoteName(name) {
   return identity
 }
 
+// ---- Phone: songs this person sang ----
+// A song counts once it starts playing on the TV, requested by this phone.
+// Newest first; kept on the phone.
+
+const MAX_SUNG_SONGS = 30
+
+export function getSungSongs() {
+  const saved = getItem(STORAGE_KEYS.remoteSungSongs, [])
+  return Array.isArray(saved) ? saved.filter((song) => song && typeof song.id === 'string') : []
+}
+
+export function recordSungSong(song) {
+  const sung = [toRemoteSong(song), ...getSungSongs().filter((s) => s.id !== song.id)].slice(0, MAX_SUNG_SONGS)
+  setItem(STORAGE_KEYS.remoteSungSongs, sung)
+  return sung
+}
+
 // Song fields worth sending to phones (keeps snapshots small).
 export function toRemoteSong(song) {
   if (!song) return null

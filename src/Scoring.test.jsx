@@ -253,6 +253,38 @@ describe('karaoke scoring', () => {
     await startSinging() // mic setup, 3-2-1, song back to 0:00
   })
 
+  it('phones see the score and countdown, and ⏭ on a phone is the Next Song button', async () => {
+    session.resultsAutoNextSeconds = 20
+    const server = installMockServer()
+    await setUpQueue()
+    // The landing page's room (see HomeRoomQr): connect the TV's event stream.
+    const tv = await waitFor(() => {
+      const host = globalThis.FakeEventSource.instances.filter((es) => es.url.includes('role=host')).at(-1)
+      expect(host).toBeTruthy()
+      return host
+    })
+    act(() => tv.emit('open'))
+    await startSinging()
+    sing(4)
+    act(() => fakePlayers.current.end())
+    const results = await screen.findByRole('dialog', { name: 'Karaoke Score' }, { timeout: 5000 })
+    const score = Number(within(results).getByLabelText(/Karaoke Score \d+ out of 100/).textContent.match(/\d+/)[0])
+
+    // Phones get the score and how long until the next song starts.
+    await waitFor(() => {
+      const published = server.calls.filter((c) => c.path.endsWith('/state')).at(-1)?.body
+      expect(published?.results).toMatchObject({ song: { title: 'Buwan' }, score })
+      expect(published.results.nextInSeconds).toBeGreaterThan(15)
+    })
+
+    // A phone presses ⏭ → same as Next Song on the TV.
+    act(() => tv.emit('command', { type: 'SKIP_SONG', payload: {}, from: { id: 'phone-mika', name: 'Mika' } }))
+    expect(await screen.findByText('📱 Mika: next song')).toBeTruthy()
+    await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.harana.id))
+    expect(screen.queryByRole('dialog', { name: 'Karaoke Score' })).toBeNull()
+    await waitFor(() => expect(server.calls.filter((c) => c.path.endsWith('/state')).at(-1).body.results).toBeNull())
+  })
+
   it('a song nobody sang gets no score: no results screen, straight to the next song', async () => {
     await setUpQueue()
     await startSinging()
