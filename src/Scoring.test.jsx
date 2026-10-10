@@ -201,6 +201,29 @@ describe('karaoke scoring', () => {
     await waitFor(() => expect(scoringBadge()).toBeTruthy())
   })
 
+  it('plays the score counter sound when the final score appears (not when muted)', async () => {
+    const play = vi.spyOn(window.HTMLMediaElement.prototype, 'play')
+    await setUpQueue()
+    await startSinging()
+    sing(3)
+    act(() => fakePlayers.current.end())
+    await screen.findByRole('dialog', { name: 'Karaoke Score' }, { timeout: 5000 })
+    expect(play).toHaveBeenCalledTimes(1)
+    const sound = play.mock.instances[0]
+    expect(sound.src).toMatch(/mixkit-score-casino-counter-1998/)
+    expect(sound.volume).toBeCloseTo(0.8)
+
+    // Muted → the next score screen is silent.
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Karaoke Score' })).getByRole('button', { name: /Sing Again/ }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Mute' })[0])
+    await screen.findByLabelText('Scoring: recording your singing', {}, { timeout: 4000 })
+    sing(3, VOICE, 0)
+    act(() => fakePlayers.current.end())
+    await screen.findByRole('dialog', { name: 'Karaoke Score' }, { timeout: 5000 })
+    expect(play).toHaveBeenCalledTimes(1)
+    play.mockRestore()
+  })
+
   it('Sing Again restarts the song (mic setup remembered)', async () => {
     await setUpQueue()
     await startSinging()

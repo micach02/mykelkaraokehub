@@ -32,6 +32,12 @@ if (isBrowserEnv) {
   // jsdom has no layout: scrolling is a no-op (tests can spy on it).
   window.scrollTo = () => {}
 
+  // jsdom can't play audio: make play/pause silent no-ops (tests can spy on them).
+  window.HTMLMediaElement.prototype.play = function play() {
+    return Promise.resolve()
+  }
+  window.HTMLMediaElement.prototype.pause = function pause() {}
+
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = () => {}
   }

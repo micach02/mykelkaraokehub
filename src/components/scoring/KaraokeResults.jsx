@@ -6,6 +6,7 @@ import { Button } from '../common/Button'
 import { PerformanceStats } from './PerformanceStats'
 import { PersonalBest } from './PersonalBest'
 import { SCORING_SESSION } from '../../config/scoringConfig'
+import scoreRevealSound from '../../assets/sounds/mixkit-score-casino-counter-1998.wav'
 
 function fileNameFor(song, score) {
   const slug = song.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -18,7 +19,7 @@ function fileNameFor(song, score) {
 // unless someone taps the results to read them.
 export function KaraokeResults() {
   const { phase, results, singAgain, nextSong, backToSongs, dismissResults, autoNextAt, stopAutoNext } = useScoring()
-  const { queue } = useKaraokeState()
+  const { queue, volume, isMuted } = useKaraokeState()
   const open = phase === 'results' && Boolean(results)
   const hasNext = queue.length > 0
 
@@ -31,6 +32,19 @@ export function KaraokeResults() {
     const timer = window.setInterval(() => setNow(Date.now()), 250)
     return () => window.clearInterval(timer)
   }, [autoNextAt])
+
+  // Score counter sound as the final score appears (follows the app's volume
+  // and Mute). Stops if the results close first.
+  const soundKey = open ? results : null
+  useEffect(() => {
+    const level = SCORING_SESSION.resultsSoundVolume * (isMuted ? 0 : volume / 100)
+    if (!soundKey || level <= 0) return undefined
+    const audio = new Audio(scoreRevealSound)
+    audio.volume = Math.min(1, level)
+    audio.play()?.catch?.(() => {}) // the browser may block it; the score still shows
+    return () => audio.pause()
+  }, [soundKey]) // once per score screen, not on every volume change
+
   const secondsLeft = autoNextAt == null
     ? null
     : Math.min(SCORING_SESSION.resultsAutoNextSeconds, Math.max(0, Math.ceil((autoNextAt - now) / 1000)))

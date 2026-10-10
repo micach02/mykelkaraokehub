@@ -100,7 +100,7 @@ Scoring is controlled by one switch under the player: **🎤 Auto-score** (on by
 3. **First time only:** a 3-second **microphone check**. Sing or talk. It reports *GOOD*, *too quiet*, *no sound*, or *too loud / clipping* and measures your room's background noise. If it says **GOOD**, it moves on by itself after a second; otherwise you choose **Try again** or **Continue anyway**. Then **3 – 2 – 1**, and the song restarts from the beginning.
 4. **From then on**, every song that starts, from the queue, a phone, or **Next Song** on the results, is scored and recorded **straight away**, with no pause or countdown.
 5. Sing. Nothing gets in the way of the lyrics: no live score while you sing, just a small **● Recording** badge in the corner of the video, so everyone knows the mic is on. The recording pauses when the song is paused.
-6. When the song ends, you get the results, kept short: your **final score** out of 100 with its grade (👑 LEGENDARY 95+, 🌟 EXCELLENT 90+, 🔥 GREAT 80+, 👏 GOOD 70+, 🎶 KEEP SINGING 60+, 🎤 WARM UP) and personal best, plus your **stats**: notes sung, notes hit, perfect notes, best streak, average pitch (and timing) deviation, vocal range, and time singing. Underneath, **▶ your recording** to play back, and **⬇ Save recording** to keep it as a file. The **next song plays automatically after 20 seconds** (`resultsAutoNextSeconds` in `scoringConfig.js`). Tap the results to keep reading them, or choose **Sing Again**, **Next Song**, or **Back to Songs**.
+6. When the song ends, a **score counter sound** plays (it follows the app's volume and Mute; set `resultsSoundVolume` in `scoringConfig.js` to `0` to turn it off) and you get the results, kept short: your **final score** out of 100 with its grade (👑 LEGENDARY 95+, 🌟 EXCELLENT 90+, 🔥 GREAT 80+, 👏 GOOD 70+, 🎶 KEEP SINGING 60+, 🎤 WARM UP) and personal best, plus your **stats**: notes sung, notes hit, perfect notes, best streak, average pitch (and timing) deviation, vocal range, and time singing. Underneath, **▶ your recording** to play back, and **⬇ Save recording** to keep it as a file. The **next song plays automatically after 20 seconds** (`resultsAutoNextSeconds` in `scoringConfig.js`). Tap the results to keep reading them, or choose **Sing Again**, **Next Song**, or **Back to Songs**.
 7. **Nobody sang?** Then there are no results: the next song just starts, with a short note that there was no singing to score.
 
 While you sing:
@@ -301,7 +301,7 @@ src/
 
 ## Testing
 
-`npm test` runs **133 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
+`npm test` runs **134 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
 
 - **Server**: karaoke filtering and title cleanup (with artist aliases), the shared cache (including saving to disk), the quota guard, key errors, rooms and command validation, and a real HTTP + SSE round trip (phone command → TV stream, TV state → phone stream).
 - **Queue logic**: Play Now, add, duplicates, auto-start, remove, reorder, skip, song ended, stale events, clear, volume, restore, requester tracking, and dropping old placeholder songs.
@@ -362,3 +362,9 @@ src/
 - **Bluetooth headsets and speakers add delay,** which can make timing look *late*. Adjust `inputLatencyMs` in `scoringConfig.js` (default 40 ms).
 - **Browsers differ.** It was tested in Chrome. Edge, Firefox, and Safari support the same Web Audio features, but their microphone processing differs, so scores can vary slightly. Browsers without microphone support show "Karaoke scoring unavailable".
 - **Rap, spoken parts, and whispering** have little steady pitch. They're skipped like silence, so a mostly spoken song may end with "We couldn't hear enough singing".
+
+---
+
+## Credits
+
+- Score counter sound (`src/assets/sounds/mixkit-score-casino-counter-1998.wav`): "Score casino counter" from [Mixkit](https://mixkit.co/free-sound-effects/), used under the Mixkit Sound Effects Free License.

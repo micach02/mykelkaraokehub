@@ -115,6 +115,9 @@ export const SCORING_SESSION = {
   // After the results appear, the next song plays automatically after this
   // many seconds (0 = never).
   resultsAutoNextSeconds: 20,
+  // "Score counter" sound when the final score appears, relative to the app's
+  // volume (0 = no sound). Follows Mute.
+  resultsSoundVolume: 0.8,
   // Auto-score only starts if the song is at most this far in when it starts
   // playing (a song resumed halfway isn't scored from the middle).
   autoStartMaxSeconds: 5,
