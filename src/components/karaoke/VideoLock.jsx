@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import { getItem, setItem, STORAGE_KEYS } from '../../services/storageService'
 import { cx } from '../../utils/classNames'
 
-// The video works like a normal YouTube player by default. "🔒 Lock video"
-// makes it watch-only (no accidental pausing, YouTube links, or suggested
-// videos) and is remembered on this device until unlocked.
+// The video works like a normal YouTube player by default. The "🔒 Lock
+// video" switch (in the player controls) makes it watch-only: no accidental
+// pausing, YouTube links, or suggested videos. Remembered on this device.
 
 // Locked: two transparent shields cover the video, leaving the bottom-right
 // corner open, where YouTube shows its "Skip" button on ads, so ads can
@@ -18,28 +18,40 @@ export function VideoShield() {
   )
 }
 
+// Shared by the player (shields) and the controls (switch).
+const listeners = new Set()
+const subscribe = (listener) => {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+const isLocked = () => getItem(STORAGE_KEYS.videoLocked, false) === true
+
 export function useVideoLock() {
-  const [locked, setLocked] = useState(() => getItem(STORAGE_KEYS.videoLocked, false) === true)
+  const locked = useSyncExternalStore(subscribe, isLocked, () => false)
   const toggle = useCallback(() => {
-    setLocked((current) => {
-      setItem(STORAGE_KEYS.videoLocked, !current)
-      return !current
-    })
+    setItem(STORAGE_KEYS.videoLocked, !isLocked())
+    listeners.forEach((listener) => listener())
   }, [])
   return { locked, toggle }
 }
 
-export function VideoLockToggle({ locked, toggle }) {
+// On/off switch, styled like the Auto-score switch.
+export function VideoLockToggle({ size = 'md' }) {
+  const { locked, toggle } = useVideoLock()
   return (
     <button
       type="button"
-      className={cx('video-lock', locked && 'video-lock--locked')}
+      role="switch"
+      aria-checked={locked}
+      aria-label="Lock video: taps on the video do nothing, except ad Skip buttons"
+      className={cx('auto-score', `auto-score--${size}`, locked && 'auto-score--on')}
       onClick={toggle}
-      aria-pressed={locked}
-      aria-label={locked ? 'Video locked: taps do nothing except ad Skip buttons. Unlock the video' : 'Lock the video, so taps can’t pause it or open YouTube'}
-      title={locked ? 'Unlock the video' : 'Lock the video (ad Skip buttons still work)'}
+      title={locked ? 'Video locked (ad Skip buttons still work). Tap to unlock.' : 'Lock the video so taps can’t pause it or open YouTube'}
     >
-      {locked ? '🔒 Locked · Unlock' : '🔓 Lock video'}
+      <span className="auto-score__track" aria-hidden="true">
+        <span className="auto-score__thumb" />
+      </span>
+      <span className="auto-score__label">🔒 Lock video</span>
     </button>
   )
 }

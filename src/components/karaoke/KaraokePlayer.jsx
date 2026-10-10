@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useKaraokePlayer } from '../../hooks/useKaraokePlayer'
 import { PlayerOverlay } from './PlayerOverlay'
-import { VideoLockToggle, VideoShield, useVideoLock } from './VideoLock'
+import { VideoShield, useVideoLock } from './VideoLock'
 import { PracticeStage } from '../scoring/PracticeStage'
 import { cx } from '../../utils/classNames'
 
@@ -38,11 +38,10 @@ export function KaraokePlayer({
     return onRegister({ play, pause, stop, seek, setGuideEnabled, retry, getProgress })
   }, [onRegister, play, pause, stop, seek, setGuideEnabled, retry, getProgress])
 
-  // The video works like a normal YouTube player unless locked (then only
-  // the corner with YouTube's ad Skip button takes taps).
-  const videoLock = useVideoLock()
+  // The video works like a normal YouTube player unless locked (the switch
+  // is in the player controls); then only the ad Skip corner takes taps.
+  const { locked } = useVideoLock()
   const isYouTube = Boolean(song) && engineKind === 'youtube'
-  const showLockToggle = isYouTube && ['playing', 'buffering', 'paused'].includes(status)
 
   return (
     <div className={cx('karaoke-player', `karaoke-player--${status}`)}>
@@ -50,8 +49,7 @@ export function KaraokePlayer({
         ref={containerRef}
         className={cx('karaoke-player__video', engineKind !== 'youtube' && 'karaoke-player__video--hidden')}
       />
-      {isYouTube && videoLock.locked && <VideoShield />}
-      {showLockToggle && <VideoLockToggle {...videoLock} />}
+      {isYouTube && locked && <VideoShield />}
       {song && engineKind === 'practice' && <PracticeStage song={song} getProgress={getProgress} />}
       <PlayerOverlay
         song={song}

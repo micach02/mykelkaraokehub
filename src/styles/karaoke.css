@@ -58,7 +58,7 @@
    or suggested videos). Two transparent shields cover it, leaving one corner
    open: the bottom-right, where YouTube shows its "Skip" button on ads, so
    ads can still be skipped right away. Unlocked (the default), it's a normal
-   YouTube player. */
+   YouTube player. The switch is in the player controls (VideoLock.jsx). */
 .karaoke-player {
   --skip-zone-width: clamp(150px, 30%, 340px);
   --skip-zone-height: clamp(72px, 26%, 170px);
@@ -81,42 +81,6 @@
   bottom: 0;
   height: var(--skip-zone-height);
   right: var(--skip-zone-width);
-}
-
-.video-lock {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 5;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: var(--radius-pill);
-  background: rgba(8, 7, 18, 0.7);
-  backdrop-filter: blur(8px);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  opacity: 0.6;
-  cursor: pointer;
-  transition: opacity 0.2s var(--ease);
-}
-
-.video-lock:hover,
-.video-lock:focus-visible,
-.karaoke-player:hover .video-lock {
-  opacity: 1;
-}
-
-.video-lock--locked {
-  border-color: rgba(252, 209, 22, 0.6);
-  color: #ffe58a;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .video-lock {
-    transition: none;
-  }
 }
 
 .karaoke-player__video--hidden {
@@ -701,25 +665,115 @@
   padding: 0;
 }
 
+/* ---------- Karaoke Mode deck (TV) ----------
+   now playing │ controls │ QR code
+   up next     │ (cont.)  │ Add Songs · Queue · Exit
+   shortcuts                                         */
 .karaoke-mode {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) auto;
+  grid-template-areas:
+    'now controls room'
+    'next next actions'
+    'keys keys keys';
   align-items: center;
-  gap: 16px 40px;
-  padding: 20px 40px 16px;
-  background: linear-gradient(to top, #0b0814, #140e28);
+  gap: 12px 40px;
+  padding: 18px 40px 12px;
   border-top: 1px solid var(--border-strong);
   transition: opacity 0.4s;
 }
 
+.karaoke-mode > .now-playing { grid-area: now; min-width: 0; }
+.karaoke-mode > .player-controls { grid-area: controls; min-width: 0; }
+.karaoke-mode__room { grid-area: room; justify-self: end; }
+.karaoke-next { grid-area: next; }
+.karaoke-mode__actions { grid-area: actions; }
+.karaoke-mode__shortcuts { grid-area: keys; }
+
 .karaoke-mode__actions {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
 
 .karaoke-mode__shortcuts {
-  grid-column: 1 / -1;
   font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Up next: one quiet line of the next few songs and their singers. */
+.karaoke-next {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.karaoke-next__heading {
+  flex-shrink: 0;
+}
+
+.karaoke-next__list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.karaoke-next__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 22rem;
+  padding: 6px 14px 6px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: clamp(0.95rem, 1vw, 1.15rem);
+}
+
+.karaoke-next__index {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 0.8em;
+  font-weight: 800;
+}
+
+.karaoke-next__title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Requester as quiet text ("🎤 Mika"), like the queue rows. */
+.karaoke-next__item .requester {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #9fe6ff;
+  font-size: inherit;
+}
+
+.karaoke-next__more,
+.karaoke-next__empty {
+  flex-shrink: 0;
+  margin: 0;
   color: var(--text-dim);
 }
 
@@ -733,18 +787,6 @@
   opacity: 0.3;
 }
 
-@media (max-width: 1280px) {
-  .karaoke-mode {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    padding: 16px 24px;
-    gap: 14px 24px;
-  }
-
-  .karaoke-mode__actions {
-    grid-column: 1 / -1;
-    justify-content: center;
-  }
-}
 
 /* ---------- Mobile player ---------- */
 @media (max-width: 900px) {
@@ -822,22 +864,62 @@
     height: auto;
   }
 
+
+  .player-controls--xl .btn--xl {
+    --btn-height: 3.25rem;
+    font-size: 1.1rem;
+  }
+}
+
+/* Laptops / smaller TVs: controls under now playing, QR + buttons on the right. */
+@media (max-width: 1280px) {
   .karaoke-mode {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'now room'
+      'controls room'
+      'next actions'
+      'keys keys';
+    gap: 10px 28px;
+    padding: 14px 24px 10px;
+  }
+}
+
+/* Phones: one column. Up next becomes a short vertical list. */
+@media (max-width: 900px) {
+  .karaoke-mode {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'now' 'controls' 'next' 'actions' 'room';
+    gap: 16px;
     padding: 16px;
+  }
+
+  .karaoke-mode__room {
+    justify-self: center;
   }
 
   .karaoke-mode__actions {
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .karaoke-mode__shortcuts {
     display: none;
   }
 
-  .player-controls--xl .btn--xl {
-    --btn-height: 3.25rem;
-    font-size: 1.1rem;
+  .karaoke-next {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .karaoke-next__list {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .karaoke-next__item {
+    max-width: none;
   }
 }
 
@@ -974,10 +1056,4 @@
   color: var(--text);
 }
 
-@media (max-width: 1280px) {
-  .room-qr-card {
-    grid-column: 1 / -1;
-    justify-self: center;
-  }
-}
 

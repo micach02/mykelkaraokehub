@@ -139,29 +139,30 @@ describe('myKelKaraokeHub (TV)', () => {
     scrollTo.mockRestore()
   })
 
-  it('the video is unlocked by default; 🔒 Lock video blocks taps except the ad Skip corner', async () => {
+  it('the video is unlocked by default; the 🔒 Lock video switch blocks taps except the ad Skip corner', async () => {
     renderApp()
     const results = await searchYouTube('opm')
     fireEvent.click(results.getByRole('button', { name: 'Play Kathang Isip by Ben&Ben now' }))
-    const player = within(screen.getByRole('region', { name: 'Karaoke player' }))
     const shields = () => document.querySelectorAll('.video-shield')
 
-    // Unlocked: a normal YouTube player (Skip ads, pause, …).
-    const lockButton = await player.findByRole('button', { name: /^Lock the video/ })
+    // Unlocked: a normal YouTube player (Skip ads, pause, …). The switch is
+    // in the player controls, not on the video.
+    const lockSwitch = await screen.findByRole('switch', { name: /^Lock video/ })
+    expect(lockSwitch.closest('.player-controls')).toBeTruthy()
+    expect(lockSwitch.getAttribute('aria-checked')).toBe('false')
     expect(shields()).toHaveLength(0)
-    expect(lockButton.textContent).toBe('🔓 Lock video')
 
     // Locked: shields cover the video except the bottom-right corner, where
     // YouTube's ad Skip button is.
-    fireEvent.click(lockButton)
-    expect([...shields()].map((s) => s.className)).toEqual(['video-shield video-shield--top', 'video-shield video-shield--left'])
-    expect(player.getByRole('button', { name: /^Video locked/ }).textContent).toBe('🔒 Locked · Unlock')
+    fireEvent.click(lockSwitch)
+    expect(lockSwitch.getAttribute('aria-checked')).toBe('true')
+    expect([...shields()].map((el) => el.className)).toEqual(['video-shield video-shield--top', 'video-shield video-shield--left'])
 
     // Stays locked for the next song, until unlocked.
     fireEvent.click(results.getByRole('button', { name: 'Play Tadhana by Up Dharma Down now' }))
     await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.tadhana.id))
     expect(shields()).toHaveLength(2)
-    fireEvent.click(await player.findByRole('button', { name: /^Video locked/ }))
+    fireEvent.click(screen.getByRole('switch', { name: /^Lock video/ }))
     expect(shields()).toHaveLength(0)
   })
 
@@ -267,5 +268,14 @@ describe('myKelKaraokeHub (TV)', () => {
     fireEvent.submit(search.closest('form'))
     fireEvent.click(await within(picker).findByRole('button', { name: 'Add Buwan to queue' }))
     expect(await screen.findByText('▶ Now playing: Buwan')).toBeTruthy()
+
+    // The deck's Up next strip lists the next songs (nothing yet → a hint).
+    const upNext = () => within(screen.getByRole('region', { name: 'Up next' }))
+    expect(upNext().getByText(/Nothing queued yet/)).toBeTruthy()
+    fireEvent.change(search, { target: { value: 'Kathang Isip' } })
+    fireEvent.submit(search.closest('form'))
+    fireEvent.click(await within(picker).findByRole('button', { name: 'Add Kathang Isip to queue' }))
+    await waitFor(() => expect(upNext().getByText('Kathang Isip')).toBeTruthy())
+    expect(upNext().getAllByRole('listitem')).toHaveLength(1)
   })
 })

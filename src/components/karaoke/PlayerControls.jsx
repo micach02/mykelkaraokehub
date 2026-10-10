@@ -2,6 +2,7 @@ import { useKaraokeActions, useKaraokeState } from '../../context/KaraokeContext
 import { usePlaybackProgress } from '../../hooks/useKaraokePlayer'
 import { Button } from '../common/Button'
 import { AutoScoreToggle } from '../scoring/AutoScoreToggle'
+import { VideoLockToggle } from './VideoLock'
 import { formatTime } from '../../utils/time'
 import { isFullscreenSupported } from '../../utils/fullscreen'
 import { cx } from '../../utils/classNames'
@@ -62,6 +63,7 @@ export function PlayerControls({ size = 'md', fullscreenTarget }) {
             onClick={actions.skipSong}
           />
           {hasSong && <AutoScoreToggle size={size} />}
+          {hasSong && currentSong.source !== 'practice' && <VideoLockToggle size={size} />}
         </div>
 
         <div className="player-controls__group player-controls__volume">
