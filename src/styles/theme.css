@@ -81,7 +81,6 @@ body::after {
 
 .song-card,
 .category-tile,
-.queue-item,
 .queue-now,
 .song-row {
   background: var(--glass);
@@ -740,9 +739,6 @@ button.home-qr:hover {
   margin-top: 0;
 }
 
-.queue-item__main .requester {
-  margin-top: 5px;
-}
 
 /* ---------- Karaoke Mode deck layout ---------- */
 .karaoke-mode > .now-playing { grid-area: now; min-width: 0; }

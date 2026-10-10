@@ -2,8 +2,9 @@ import { memo, useLayoutEffect, useRef } from 'react'
 import { cx } from '../../utils/classNames'
 import { RequesterBadge, requesterName } from '../common/RequesterBadge'
 
-// One row in "Up Next". Reorder by dragging (mouse), the ▲ ▼ buttons (touch),
-// or the ☰ handle with arrow keys (keyboard).
+// One row in "Up Next": number, title, and "artist · 🎤 requester". The
+// number is the drag handle (it turns into a grip on hover; arrow keys move
+// it too). ▲ ▼ ✕ appear on hover/focus, and stay visible on touch screens.
 export const QueueItem = memo(function QueueItem({
   entry,
   index,
@@ -72,9 +73,9 @@ export const QueueItem = memo(function QueueItem({
           }
         }}
       >
-        ☰
+        <span className="queue-item__index">{index + 1}</span>
+        <span className="queue-item__grip" aria-hidden="true">⠿</span>
       </button>
-      <span className="queue-item__index" aria-hidden="true">{index + 1}</span>
       <button
         type="button"
         className="queue-item__main"
@@ -83,8 +84,10 @@ export const QueueItem = memo(function QueueItem({
         title="Play now"
       >
         <span className="queue-item__title">{song.title}</span>
-        <span className="queue-item__artist">{song.artist}</span>
-        <RequesterBadge requestedBy={entry.requestedBy} className="queue-item__requester" />
+        <span className="queue-item__meta">
+          <span className="queue-item__artist">{song.artist}</span>
+          <RequesterBadge requestedBy={entry.requestedBy} className="queue-item__requester" />
+        </span>
       </button>
       <div className="queue-item__actions">
         <button
