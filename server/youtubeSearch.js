@@ -178,6 +178,15 @@ export function createYouTubeSearch({ apiKey = '', cacheFile = null, fetchImpl =
     return { blocked, resetsAt: blocked ? new Date(quotaBlockedUntil).toISOString() : null }
   }
 
+  // Someone asked for this search on purpose (not just typing past it).
+  // Strictly increasing, so two picks in the same millisecond keep their order.
+  let lastChosenAt = 0
+  function markChosen(entry) {
+    entry.chosenAt = Math.max(now(), lastChosenAt + 1)
+    lastChosenAt = entry.chosenAt
+    scheduleSave()
+  }
+
   function quotaError() {
     return new ApiError(429, 'quota', "Today's YouTube search limit has been reached. Saved songs and earlier searches still work.")
   }
@@ -248,7 +257,10 @@ export function createYouTubeSearch({ apiKey = '', cacheFile = null, fetchImpl =
       if (query.length < config.minQueryLength) throw new ApiError(400, 'bad-query', 'Type at least 2 characters.')
       const cacheKey = normalizeText(query)
       const hit = cache.get(cacheKey)
-      if (isFresh(hit)) return { query, results: hit.results, cached: true }
+      if (isFresh(hit)) {
+        if (searchMode === 'full') markChosen(hit)
+        return { query, results: hit.results, cached: true }
+      }
 
       const nothing = (extra = {}) => ({ query, results: null, cached: false, ...extra })
       if (searchMode !== 'full') {
@@ -269,17 +281,20 @@ export function createYouTubeSearch({ apiKey = '', cacheFile = null, fetchImpl =
         .slice(0, config.maxResults)
         .map(toSong)
 
-      cache.set(cacheKey, { query, at: now(), results })
+      const entry = { query, at: now(), results }
+      if (searchMode === 'full') markChosen(entry)
+      cache.set(cacheKey, entry)
       prune()
       scheduleSave()
       return { query, results, cached: false }
     },
 
-    // Most recent searches anyone made (free to repeat).
+    // Searches people chose recently (free to repeat): Enter, a chip, a
+    // category. Not the in-between ones made while typing ("umagang kay g…").
     recent(limit = 12) {
       return [...cache.values()]
-        .filter((entry) => isFresh(entry) && entry.results.length > 0)
-        .sort((a, b) => b.at - a.at)
+        .filter((entry) => isFresh(entry) && entry.chosenAt && entry.results.length > 0)
+        .sort((a, b) => b.chosenAt - a.chosenAt)
         .slice(0, limit)
         .map((entry) => entry.query)
     },

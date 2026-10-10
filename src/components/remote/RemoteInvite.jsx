@@ -3,6 +3,7 @@ import { QrCode } from '../room/QrCode'
 import { useToast } from '../../context/ToastContext'
 import { useServerStatus } from '../../hooks/useServerStatus'
 import { getJoinUrl } from '../../services/roomService'
+import { IS_HOSTED_SERVER } from '../../services/apiClient'
 import { canNativeShare, copyText, messagingLinks, nativeShare } from '../../utils/share'
 import { BRAND } from '../../config/appConfig'
 
@@ -52,7 +53,9 @@ export function RemoteInvite({ code }) {
         ))}
       </div>
 
-      <p className="remote-invite__note">Friends need to be on the same Wi-Fi as the TV.</p>
+      <p className="remote-invite__note">
+        {IS_HOSTED_SERVER ? 'Friends can join from anywhere, no matter which Wi-Fi they’re on.' : 'Friends need to be on the same Wi-Fi as the TV.'}
+      </p>
     </section>
   )
 }

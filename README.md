@@ -23,6 +23,8 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
   - see what's playing and what's next
   - play/pause and skip. While the TV shows a song's **Karaoke Score**, the phone shows the score too, with the same "next song" countdown. Its **⏭ Next song** button works like the TV's Next Song button.
   - see **their own recently sung songs** ("Recently sung by Mika"): songs they requested that played on the TV, kept on their phone for one-tap re-adding. Other people's songs aren't listed.
+  - see **where their song is**: "🎶 Your next song is #3 in line", "⏭ You're up next", and, when it starts, "🎤 It's your turn!" with a message and a short buzz. Their own songs are highlighted in the queue.
+  - pick from a short first screen: a few vibe chips, 8 OPM artists (**More artists** shows the rest), and **Trending here**. Trending lists searches people chose (Enter, a chip, a category), not the half-typed ones made while typing.
   - remove songs they added
   - **invite more friends** from the 📤 Invite tab: show a QR code on their own phone for others to scan, or send the link with Share, Copy link, Messenger, Viber, WhatsApp, or Text message. On plain `http://` home-network addresses, phones often disable the built-in share sheet and clipboard, so the QR code and messaging links are the reliable options, and Copy falls back to a method that works without HTTPS.
   - **enter their name first.** After scanning, a phone shows **Join the karaoke** and asks for a name before any songs appear; the name can't be skipped or left blank. It's remembered on the phone, and the 🎤 name button changes it. Every song they add shows a **🎤 Mika** badge in the TV queue, in Now Playing and Up next (including Karaoke Mode), and on every phone. Your own songs show as **You** on your phone.
@@ -301,7 +303,7 @@ src/
 
 ## Testing
 
-`npm test` runs **134 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
+`npm test` runs **137 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
 
 - **Server**: karaoke filtering and title cleanup (with artist aliases), the shared cache (including saving to disk), the quota guard, key errors, rooms and command validation, and a real HTTP + SSE round trip (phone command → TV stream, TV state → phone stream).
 - **Queue logic**: Play Now, add, duplicates, auto-start, remove, reorder, skip, song ended, stale events, clear, volume, restore, requester tracking, and dropping old placeholder songs.

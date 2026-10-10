@@ -15,6 +15,10 @@ import { FlagPH } from '../common/Icon'
 
 const FEATURED_ARTISTS = getFeaturedArtists().map((a) => a.name)
 const EMPTY = []
+// Keep the first screen short: a few of each, the rest one tap away.
+const SUGGESTIONS_SHOWN = 6
+const ARTISTS_SHOWN = 8
+const TRENDING_SHOWN = 8
 
 function SongList({ songs, label, songState, onAdd, disabled, stale }) {
   return (
@@ -54,7 +58,9 @@ export function RemoteSearch({ savedSongs = EMPTY, sungSongs = EMPTY, singerName
   const submitted = Boolean(submittedQuery) && submittedQuery === trimmed
   const youtube = useYouTubeSearch(submitted ? trimmed : liveQuery, { mode: submitted ? 'full' : 'live' })
   const recentSearches = useRecentSearches()
-  const suggestions = useMemo(() => getSuggestions(sungSongs), [sungSongs])
+  const suggestions = useMemo(() => getSuggestions(sungSongs, { limit: SUGGESTIONS_SHOWN }), [sungSongs])
+  const [allArtists, setAllArtists] = useState(false)
+  const artists = allArtists ? FEATURED_ARTISTS : FEATURED_ARTISTS.slice(0, ARTISTS_SHOWN)
 
   // Instant matches from your sung songs + the TV's saved songs (no network).
   const instantMatches = useMemo(() => {
@@ -100,11 +106,16 @@ export function RemoteSearch({ savedSongs = EMPTY, sungSongs = EMPTY, singerName
             </>
           )}
           <h2 className="remote-heading"><FlagPH /> OPM artists</h2>
-          <QuickSearchChips items={FEATURED_ARTISTS} onSelect={searchFor} label="OPM artists" />
+          <QuickSearchChips items={artists} onSelect={searchFor} label="OPM artists" />
+          {FEATURED_ARTISTS.length > ARTISTS_SHOWN && (
+            <button type="button" className="remote-more" onClick={() => setAllArtists((all) => !all)} aria-expanded={allArtists}>
+              {allArtists ? 'Fewer artists ▴' : `More artists (${FEATURED_ARTISTS.length - ARTISTS_SHOWN}) ▾`}
+            </button>
+          )}
           {recentSearches.length > 0 && (
             <>
               <h2 className="remote-heading">🔥 Trending here</h2>
-              <QuickSearchChips items={recentSearches} onSelect={searchFor} label="Recent searches" />
+              <QuickSearchChips items={recentSearches.slice(0, TRENDING_SHOWN)} onSelect={searchFor} label="Recent searches" />
             </>
           )}
         </>

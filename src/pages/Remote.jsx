@@ -9,6 +9,8 @@ import { RemoteSearch } from '../components/remote/RemoteSearch'
 import { RemoteQueue } from '../components/remote/RemoteQueue'
 import { RemoteNameForm } from '../components/remote/RemoteNameForm'
 import { RemoteInvite } from '../components/remote/RemoteInvite'
+import { RemoteTurn, getMyTurn, useTurnAlert } from '../components/remote/RemoteTurn'
+import { IS_HOSTED_SERVER } from '../services/apiClient'
 import { Loading } from '../components/common/Loading'
 import { BRAND } from '../config/appConfig'
 import { cx } from '../utils/classNames'
@@ -47,6 +49,8 @@ export default function Remote() {
     [queue, room?.nowPlaying],
   )
   const tvOffline = hostOnline === false
+  const turn = useMemo(() => getMyTurn({ nowPlaying: room?.nowPlaying, queue, myId: identity.id }), [room?.nowPlaying, queue, identity.id])
+  useTurnAlert(turn, (song) => show(`🎤 It’s your turn! “${song.title}” is starting.`, { duration: 6000 }))
   const songState = useCallback(
     (song) => (pending.has(song.id) ? 'sending' : queuedIds.has(song.id) ? 'queued' : 'idle'),
     [pending, queuedIds],
@@ -69,7 +73,8 @@ export default function Remote() {
       return
     }
     setPending((set) => new Set(set).add(song.id))
-    await run(COMMANDS.ADD_TO_QUEUE, { song: toRemoteSong(song) }, `✓ Added “${song.title}”`)
+    const added = await run(COMMANDS.ADD_TO_QUEUE, { song: toRemoteSong(song) }, `✓ Added “${song.title}”`)
+    if (added) navigator.vibrate?.(20)
     setPending((set) => {
       const next = new Set(set)
       next.delete(song.id)
@@ -85,7 +90,7 @@ export default function Remote() {
       <RemoteMessage
         icon="📶"
         title="Can't reach the karaoke TV"
-        text="Make sure your phone is on the same Wi-Fi as the TV's computer."
+        text={IS_HOSTED_SERVER ? 'Check your internet connection and try again.' : "Make sure your phone is on the same Wi-Fi as the TV's computer."}
         action={<button type="button" className="remote-add" onClick={retry}>Try again</button>}
       />
     )
@@ -164,6 +169,7 @@ export default function Remote() {
           disabled={tvOffline || !room?.nowPlaying}
         />
       )}
+      {tab !== 'invite' && !room?.results && <RemoteTurn turn={turn} />}
 
       <main className="remote__main">
         {tab === 'search' && (

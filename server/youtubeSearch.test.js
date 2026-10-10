@@ -94,6 +94,18 @@ describe('server YouTube search', () => {
   })
 })
 
+describe('recent searches ("Trending here")', () => {
+  it('lists searches people chose, not the ones made while typing', async () => {
+    const { youtube } = setup()
+    await youtube.search('umagang kay g', { mode: 'live' })
+    await youtube.search('umagang kay gabi', { mode: 'live' })
+    expect(youtube.recent()).toEqual([])
+    await youtube.search('Umagang kay gabi') // Enter (from the cache)
+    await youtube.search('Buwan')
+    expect(youtube.recent()).toEqual(['Buwan', 'umagang kay gabi'])
+  })
+})
+
 describe('live search (as you type)', () => {
   const songsFor = (titles) => ({
     items: titles.map((title, i) => ({

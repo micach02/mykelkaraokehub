@@ -17,7 +17,7 @@ export function RemoteQueue({ queue, myId, onRemove, disabled }) {
         const mine = entry.requestedBy?.id === myId
         const thumbnail = entry.song.thumbnail || getThumbnailUrl(entry.song.youtubeVideoId)
         return (
-          <li key={entry.entryId} className="remote-song">
+          <li key={entry.entryId} className={mine ? 'remote-song remote-song--mine' : 'remote-song'}>
             <span className="remote-queue__index">{index + 1}</span>
             {thumbnail && <img className="remote-song__thumb" src={thumbnail} alt="" loading="lazy" />}
             <span className="remote-song__text">

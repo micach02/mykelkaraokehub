@@ -219,6 +219,49 @@ describe('Phone Remote — phone side', () => {
     await waitFor(() => expect(commands().map((c) => c.type)).toEqual(['SKIP_SONG']))
   })
 
+  it('tells you where your song is in line, and alerts you when it starts', async () => {
+    const vibrate = vi.fn()
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true })
+    try {
+      const phone = await openRemote()
+      join()
+      // openRemote: Jo's song is playing; Mika's Harana is first in line.
+      expect(screen.getByText('⏭ You’re up next. Get ready!')).toBeTruthy()
+
+      act(() => phone.emit('state', {
+        nowPlaying: { song: SONGS.buwan, requestedBy: { id: 'phone-jo', name: 'Jo' } },
+        isPlaying: true,
+        queue: [
+          { entryId: 'e1', song: SONGS.tadhana, requestedBy: { id: 'phone-jo', name: 'Jo' } },
+          { entryId: 'e2', song: SONGS.harana, requestedBy: { id: me.id, name: 'Mika' } },
+        ],
+        savedSongs: [], recentSongs: [],
+      }))
+      expect(screen.getByText('🎶 Your next song is #2 in line')).toBeTruthy()
+
+      // Mika's song starts: banner, message, and a buzz (once).
+      const mine = { nowPlaying: { song: SONGS.harana, requestedBy: { id: me.id, name: 'Mika' } }, isPlaying: true, queue: [], savedSongs: [], recentSongs: [] }
+      act(() => phone.emit('state', mine))
+      expect(screen.getByText('🎤 It’s your turn! Sing!')).toBeTruthy()
+      expect(await screen.findByText('🎤 It’s your turn! “Harana” is starting.')).toBeTruthy()
+      act(() => phone.emit('state', { ...mine, isPlaying: false }))
+      expect(vibrate).toHaveBeenCalledTimes(1)
+    } finally {
+      delete navigator.vibrate
+    }
+  })
+
+  it('keeps the search tab short: a few artists, the rest behind "More artists"', async () => {
+    await openRemote()
+    join()
+    const artists = () => within(screen.getByRole('group', { name: 'OPM artists' })).getAllByRole('button')
+    expect(artists()).toHaveLength(8)
+    fireEvent.click(screen.getByRole('button', { name: /More artists/ }))
+    expect(artists().length).toBeGreaterThan(8)
+    fireEvent.click(screen.getByRole('button', { name: /Fewer artists/ }))
+    expect(artists()).toHaveLength(8)
+  })
+
   it('blocks adding a song that is already queued', async () => {
     await openRemote()
     join()

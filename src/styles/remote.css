@@ -331,6 +331,70 @@
   border-color: rgba(52, 211, 153, 0.4);
 }
 
+/* Your own songs in the queue stand out a little. */
+.remote-song--mine {
+  border-color: rgba(180, 123, 255, 0.45);
+  background: rgba(124, 92, 255, 0.1);
+}
+
+/* "Your turn" banner under Now playing. */
+.remote-turn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin: 10px 16px 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(180, 123, 255, 0.35);
+  border-radius: var(--radius);
+  background: rgba(124, 92, 255, 0.12);
+  font-weight: 700;
+}
+
+.remote-turn__song {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-turn--now {
+  border-color: rgba(252, 209, 22, 0.55);
+  background: rgba(252, 209, 22, 0.12);
+  color: #ffe58a;
+  animation: turn-glow 1.6s ease-in-out infinite;
+}
+
+.remote-turn--next {
+  border-color: rgba(61, 217, 255, 0.45);
+  background: rgba(61, 217, 255, 0.1);
+}
+
+@keyframes turn-glow {
+  50% { box-shadow: 0 0 0 4px rgba(252, 209, 22, 0.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remote-turn--now {
+    animation: none;
+  }
+}
+
+/* "More artists ▾" under the artist chips. */
+.remote-more {
+  margin-top: 8px;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .remote-song__thumb {
   flex-shrink: 0;
   width: 72px;
