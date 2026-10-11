@@ -18,10 +18,12 @@ function ownsArrowKeys(element) {
   return false
 }
 
+// On screen and meant for pointing at (not the hidden "Skip to content" link).
 function isVisible(element) {
-  if (element.closest('[inert], [aria-hidden="true"]')) return false
+  if (element.closest('[inert], [aria-hidden="true"], .skip-link')) return false
   const rect = element.getBoundingClientRect()
-  return rect.width > 0 && rect.height > 0
+  if (rect.width <= 0 || rect.height <= 0) return false
+  return rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth
 }
 
 // Best target from `from` in `direction` among `candidates` ({ rect }):

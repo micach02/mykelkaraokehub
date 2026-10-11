@@ -31,6 +31,17 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
 - **🎯 Karaoke Score** (optional): with **Auto-score** on (the default), scoring and recording start by themselves whenever a song starts, with no button to press. The app listens through your microphone, analyzes your voice **locally in the browser**, and when the song ends shows your final score out of 100, your stats, and your recording to play back or save. The next song plays automatically after 20 seconds. Nothing is uploaded. [How it works](#-karaoke-score).
 - **Queue**: add, Play Now, remove, reorder (drag and drop, ▲/▼, or ☰ plus arrow keys), skip, clear (asks first), and duplicate protection. **The next song plays automatically.**
 - **Karaoke Mode** (`/karaoke`) for a TV: a maximized player over a tidy control deck. Now playing is on the left, playback controls in the middle, and the QR code with **Add Songs / Queue / Exit** on the right. An **Up next** strip shows the next 3 songs and who's singing them ("🎤 Mika"). It also has a song picker, the queue, fullscreen, and keyboard shortcuts. On phones the deck stacks into one column.
+- **🎉 Party features**
+  - **Tonight's top scores:** every scored song goes on a leaderboard with the singer's name (👑 for the leader). The score screen shows "#2 of 7 tonight", Home shows the top 10 (with **Clear**), and phones show the top 5 in their Queue tab. Scores older than 12 hours drop off.
+  - **Reactions:** guests tap 👏 🔥 😂 ❤️ 🎉 😍 on their phone, and they float up over the TV video with the sender's name.
+  - **Duets:** on their own queued song, a guest can add a partner, shown everywhere as "🎤🎤 Mika & Jo".
+  - **"Your turn in about 8 min":** phones estimate the wait from song lengths (fetched with each search for 1 quota unit) and the time left in the current song.
+- **Host settings** (Phone Remote panel on the TV):
+  - **Phones can pause or skip any song.** Off by default: phones can only pause or skip their own song, and on the score screen only the singer or the next singer can press Next.
+  - **Take turns:** new songs are placed so singers alternate, so one person can't fill the queue.
+- **Same room after a restart:** if the server restarts (or the free host wakes up), the TV gets its old room code back and phones reconnect by themselves ("Waiting for the TV…"). No new QR code needed.
+- **Install as an app (PWA):** **📲 Install app** appears in the header when the browser supports it (Chrome/Edge on Android, desktop, Android TV). On iPhone: Share → Add to Home Screen.
+- **TV remote navigation:** in Karaoke Mode, the D-pad or arrow keys move between controls (OK/Enter presses), with a bold focus ring.
 - **Saved on the device**: the queue, current song, volume, My Songs, and the active room survive a refresh.
 - **Mobile layout**: bottom navigation, mini player, queue bottom sheet, and a video you can hide.
 - **Accessibility**: semantic landmarks, a skip link, focus rings, ARIA labels, native `<dialog>` modals, live regions, and `prefers-reduced-motion` support.
@@ -44,7 +55,7 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
 
 ### Keyboard shortcuts (Karaoke Mode)
 
-<kbd>Space</kbd>/<kbd>K</kbd> play/pause · <kbd>N</kbd> next · <kbd>F</kbd> fullscreen · <kbd>Q</kbd> queue · <kbd>A</kbd> add songs · <kbd>Esc</kbd> exit · <kbd>/</kbd> search
+<kbd>Space</kbd>/<kbd>K</kbd> play/pause · <kbd>N</kbd> next · <kbd>F</kbd> fullscreen · <kbd>Q</kbd> queue · <kbd>A</kbd> add songs · <kbd>Esc</kbd> exit · <kbd>/</kbd> search · <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move between controls (TV remote D-pad)
 
 ---
 
@@ -194,8 +205,9 @@ The app can also run on the internet, so it works without a computer at home:
 
 - **Phones join from anywhere.** The QR code links to the public site, so the phone doesn't need the same Wi-Fi.
 - **Scoring works on any device with a mic**, because the site uses HTTPS.
-- **The free server sleeps after about 15 minutes idle.** The first visit then takes about a minute to wake it ("Can't reach the karaoke server… waking up"), and open rooms reset. The TV starts a new room by itself; scan the new QR code.
-- **Limits to protect your quota:** only the Pages site may call the server from a browser (`ALLOWED_ORIGINS`). Each visitor (IP address) gets at most 200 YouTube searches and 20 new rooms per hour, on top of the daily quota guard.
+- **The free server sleeps after about 15 minutes idle.** The first visit then takes about a minute to wake it. The TV shows "Waking up the karaoke server… 23s" and carries on by itself. The TV gets its **same room code** back, so phones reconnect without a new QR code.
+- **Limits to protect your quota:** only the Pages site may call the server from a browser (`ALLOWED_ORIGINS`). Each visitor (IP address) gets at most 200 YouTube searches, 20 new rooms, and 3,000 phone commands (including reactions) per hour, on top of the daily quota guard.
+- **Server updates:** room codes, song lengths, reactions, and duets rely on the server too, so Render must redeploy after a push (automatic with `autoDeploy`; otherwise **Manual Deploy**).
 - **The search cache resets** when the server restarts or redeploys.
 
 ---
@@ -303,7 +315,7 @@ src/
 
 ## Testing
 
-`npm test` runs **137 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
+`npm test` runs **165 tests**. YouTube and the microphone are never used: the tests use fake responses, a fake karaoke server, a fake player, and a fake microphone.
 
 - **Server**: karaoke filtering and title cleanup (with artist aliases), the shared cache (including saving to disk), the quota guard, key errors, rooms and command validation, and a real HTTP + SSE round trip (phone command → TV stream, TV state → phone stream).
 - **Queue logic**: Play Now, add, duplicates, auto-start, remove, reorder, skip, song ended, stale events, clear, volume, restore, requester tracking, and dropping old placeholder songs.
@@ -333,10 +345,11 @@ src/
 ### Phase 3
 - Song requests and voting
 - ~~Singer names~~ ✅
-- Room host controls (e.g. turn off phone skipping)
+- ~~Room host controls~~ ✅ (pause/skip permissions, take turns)
 - ~~Karaoke scoring~~ ✅ (Melody and Voice scores, personal bests)
 - Licensed reference melodies for popular songs (Melody score for YouTube songs)
-- Multiple singers, song history, leaderboard
+- ~~Duets, leaderboard, reactions~~ ✅
+- Song history across nights
 
 ### Phase 4
 - Subscriptions, business and karaoke-bar accounts, venue management, analytics, premium features

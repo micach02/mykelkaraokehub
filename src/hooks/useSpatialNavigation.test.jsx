@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fireEvent, render } from '@testing-library/react'
 import { pickNext, useSpatialNavigation } from './useSpatialNavigation'
 
-const rect = (left, top, width = 100, height = 40) => ({ left, top, width, height })
+const rect = (left, top, width = 100, height = 40) => ({ left, top, width, height, right: left + width, bottom: top + height })
 
 describe('TV remote (D-pad) navigation', () => {
   //  [A] [B] [C]
