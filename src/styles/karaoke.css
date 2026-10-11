@@ -983,12 +983,158 @@
 }
 
 /* ---------- Room (phone remote) ---------- */
-.room-card {
+/* ---------- Phone Remote panel (TV) ----------
+   QR + code + status │ how to join · link · host settings
+   One column on phones. */
+.modal--room {
+  max-width: min(880px, calc(100vw - 32px));
+}
+
+.room-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.room-panel__join {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   text-align: center;
+}
+
+.room-panel__qr {
+  padding: 14px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(180, 123, 255, 0.35), 0 16px 48px rgba(124, 92, 255, 0.3);
+  line-height: 0;
+}
+
+.room-panel__code {
+  margin-top: 4px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.room-panel__details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.room-panel__heading {
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.room-panel__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  counter-reset: room-step;
+  color: var(--text-muted);
+}
+
+.room-panel__steps li {
+  position: relative;
+  padding-left: 32px;
+  counter-increment: room-step;
+}
+
+.room-panel__steps li::before {
+  content: counter(room-step);
+  position: absolute;
+  top: 1px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gradient-ai);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.room-panel__steps strong {
+  color: var(--text);
+}
+
+.room-panel__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.room-panel__url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: all;
+}
+
+.room-panel__network {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.room-panel__network select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.room-panel__tip {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.room-panel__tip strong {
+  color: var(--text-muted);
+}
+
+/* "End room": quiet, but clearly not a harmless button. */
+.room-panel__end {
+  margin-right: auto;
+  color: #ff8fa3;
+}
+
+@media (max-width: 760px) {
+  .room-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .room-panel__qr svg {
+    width: 180px;
+    height: 180px;
+  }
 }
 
 .room-status {
@@ -1019,90 +1165,68 @@
   background: var(--danger);
 }
 
-.room-card__qr {
-  padding: 12px;
-  border-radius: var(--radius);
-  background: #fff;
-  line-height: 0;
-}
-
-.room-card__label {
-  margin-top: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.room-card__code {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  font-variant-numeric: tabular-nums;
-}
-
-.room-card__url {
-  max-width: 100%;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  overflow-wrap: anywhere;
-}
-
-.room-card__url strong {
-  color: var(--text);
-  user-select: all;
-}
-
-.room-card__network {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.room-card__network select {
-  padding: 6px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-}
-
-.room-card__tips {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-align: left;
-  list-style: disc inside;
-}
-
-/* QR card in the Karaoke Mode deck */
-/* Host settings in the Phone Remote panel */
+/* Host settings: a row per setting (title + what it means, switch right) */
 .room-settings {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 8px;
-  width: 100%;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
 }
 
-.room-settings__hint {
-  max-width: 34ch;
+.room-setting {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.room-setting:hover {
+  border-color: var(--border-strong);
+}
+
+.room-setting--on {
+  border-color: rgba(180, 123, 255, 0.45);
+  background: rgba(124, 92, 255, 0.1);
+}
+
+.room-setting__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.room-setting__title {
+  font-weight: 700;
+}
+
+.room-setting__description {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
 
+.room-setting__track {
+  flex: none;
+}
+
+.room-setting--on .auto-score__track {
+  background: var(--gradient-ai);
+}
+
+.room-setting--on .auto-score__thumb {
+  transform: translateX(14px);
+}
+
+/* QR card in the Karaoke Mode deck */
 .room-qr-card {
   display: flex;
   align-items: center;
