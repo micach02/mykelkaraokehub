@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useRemoteRoom } from '../hooks/useRemoteRoom'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useToast } from '../context/ToastContext'
 import { COMMANDS, toRemoteSong } from '../services/roomService'
 import { RemoteNowPlaying } from '../components/remote/RemoteNowPlaying'
+import { RemoteReactions } from '../components/remote/RemoteReactions'
 import { RemoteSearch } from '../components/remote/RemoteSearch'
 import { RemoteQueue } from '../components/remote/RemoteQueue'
 import { RemoteNameForm } from '../components/remote/RemoteNameForm'
@@ -14,7 +15,7 @@ import { Leaderboard } from '../components/scoring/Leaderboard'
 import { IS_HOSTED_SERVER } from '../services/apiClient'
 import { canPhoneControl, canPhoneGoNext } from '../services/roomSettings'
 import { Loading } from '../components/common/Loading'
-import { BRAND } from '../config/appConfig'
+import { BRAND, ROOM_CONFIG } from '../config/appConfig'
 import { cx } from '../utils/classNames'
 import '../styles/remote.css'
 
@@ -72,9 +73,25 @@ export default function Remote() {
     }
   }, [send, show])
 
+  // ⏭ / Next ignore taps right after an emoji tap or right as the score
+  // appears (the button just moved under a finger that was tapping).
+  const tapGuardUntil = useRef(0)
+  const guardTaps = () => {
+    tapGuardUntil.current = Date.now() + ROOM_CONFIG.remoteTapGuardMs
+  }
+  const hasResults = Boolean(room?.results)
+  useEffect(() => {
+    if (hasResults) guardTaps()
+  }, [hasResults])
+  const skip = () => {
+    if (Date.now() < tapGuardUntil.current) return
+    run(COMMANDS.SKIP_SONG, {}, room?.results ? '⏭ Next song' : 'Skipped')
+  }
+
   // Reactions go straight to the TV (no message here); at most ~2 per second.
   const lastReaction = useRef(0)
   const react = useCallback((emoji) => {
+    guardTaps()
     const now = Date.now()
     if (now - lastReaction.current < 500) return
     lastReaction.current = now
@@ -147,8 +164,11 @@ export default function Remote() {
     )
   }
 
+  // Shown while a song is on (also on its score card), but not on Invite.
+  const showReactions = Boolean(room?.nowPlaying) && tab !== 'invite'
+
   return (
-    <div className="remote">
+    <div className={cx('remote', showReactions && 'remote--reactions')}>
       <header className="remote__header">
         <span className="remote__brand">
           {BRAND.logoIcon} <span className="remote__brand-name">{BRAND.displayName}</span>
@@ -190,8 +210,7 @@ export default function Remote() {
           results={room?.results ?? null}
           receivedAt={room?.receivedAt}
           onTogglePlay={() => run(COMMANDS.TOGGLE_PLAY)}
-          onSkip={() => run(COMMANDS.SKIP_SONG, {}, room?.results ? '⏭ Next song' : 'Skipped')}
-          onReact={room?.nowPlaying ? react : undefined}
+          onSkip={skip}
           disabled={tvOffline || !room?.nowPlaying}
           canControl={canControl}
           canNext={canNext}
@@ -230,20 +249,23 @@ export default function Remote() {
         {tab === 'invite' && <RemoteInvite code={code} />}
       </main>
 
-      <nav className="remote__tabs" aria-label="Remote">
-        {TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            className={cx('remote__tab', tab === id && 'remote__tab--active')}
-            aria-pressed={tab === id}
-            onClick={() => setTab(id)}
-          >
-            {label}
-            {id === 'queue' && <span className="count-badge">{queue.length}</span>}
-          </button>
-        ))}
-      </nav>
+      <div className="remote__dock">
+        {showReactions && <RemoteReactions onReact={react} disabled={tvOffline} />}
+        <nav className="remote__tabs" aria-label="Remote">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              className={cx('remote__tab', tab === id && 'remote__tab--active')}
+              aria-pressed={tab === id}
+              onClick={() => setTab(id)}
+            >
+              {label}
+              {id === 'queue' && <span className="count-badge">{queue.length}</span>}
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   )
 }

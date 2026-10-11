@@ -54,4 +54,7 @@ export const ROOM_CONFIG = {
   // While a song plays, the TV re-sends its state this often so phones'
   // "your turn in about N min" stays accurate (also for phones joining late).
   refreshWhilePlayingMs: 30000,
+  // Phones ignore ⏭ / Next this long after an emoji tap or after the score
+  // appears, so a tap meant for something else doesn't skip a song.
+  remoteTapGuardMs: 800,
 }

@@ -12,7 +12,7 @@ vi.mock('./services/player/youtubeAdapter', () => import('./test/fakePlayer'))
 // Short waits for a room that disappeared (minutes in the app).
 vi.mock('./config/appConfig', async (importOriginal) => {
   const mod = await importOriginal()
-  return { ...mod, ROOM_CONFIG: { ...mod.ROOM_CONFIG, remoteWaitMs: 1500, remoteFirstWaitMs: 600, remoteWaitPollMs: 100 } }
+  return { ...mod, ROOM_CONFIG: { ...mod.ROOM_CONFIG, remoteWaitMs: 1500, remoteFirstWaitMs: 600, remoteWaitPollMs: 100, remoteTapGuardMs: 300 } }
 })
 
 let server
@@ -343,6 +343,11 @@ describe('Phone Remote — phone side', () => {
     expect(next.textContent).toMatch(/Next song \(1[45]\)/)
     expect(screen.queryByRole('button', { name: 'Pause on TV' })).toBeNull()
 
+    // The score just appeared: a tap that was meant for something else is ignored…
+    fireEvent.click(next)
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    expect(commands()).toEqual([])
+    // …a deliberate one goes through.
     fireEvent.click(next)
     expect(await screen.findByText('⏭ Next song')).toBeTruthy()
     await waitFor(() => expect(commands().map((c) => c.type)).toEqual(['SKIP_SONG']))
@@ -398,6 +403,24 @@ describe('Phone Remote — phone side', () => {
     fireEvent.click(reactions.getByRole('button', { name: 'React 👏' }))
     fireEvent.click(reactions.getByRole('button', { name: 'React 🔥' })) // too fast: ignored
     await waitFor(() => expect(commands().filter((c) => c.type === 'REACT').map((c) => c.payload)).toEqual([{ emoji: '👏' }]))
+  })
+
+  it('keeps reactions away from ⏭, and ignores ⏭ right after an emoji tap', async () => {
+    const phone = await openRemote()
+    join()
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.buwan, requestedBy: { id: me.id, name: 'Mika' } },
+      isPlaying: true, queue: [], savedSongs: [], recentSongs: [],
+    }))
+    const card = screen.getByRole('region', { name: 'Now playing' })
+    const reactions = screen.getByRole('group', { name: 'Send a reaction to the TV' })
+    expect(card.contains(reactions)).toBe(false) // docked above the tabs instead
+    fireEvent.click(within(reactions).getByRole('button', { name: 'React 🎉' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to the next song' })) // slipped: ignored
+    await waitFor(() => expect(commands().map((c) => c.type)).toEqual(['REACT']))
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to the next song' }))
+    await waitFor(() => expect(commands().map((c) => c.type)).toEqual(['REACT', 'SKIP_SONG']))
   })
 
   it('shows tonight’s top scores in the queue tab', async () => {
