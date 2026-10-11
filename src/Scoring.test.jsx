@@ -9,6 +9,7 @@ import { __reloadLibraryForTests } from './services/libraryService'
 import { __reloadRecentSongsForTests } from './services/historyService'
 import { __reloadScoreHistoryForTests, getPersonalBest } from './services/scoringHistoryService'
 import { setItem, STORAGE_KEYS } from './services/storageService'
+import { updateRoomSettings } from './services/roomSettings'
 import { __resetServerStatusForTests } from './hooks/useServerStatus'
 
 vi.mock('./services/player/youtubeAdapter', () => import('./test/fakePlayer'))
@@ -300,7 +301,13 @@ describe('karaoke scoring', () => {
       expect(published.results.nextInSeconds).toBeGreaterThan(15)
     })
 
-    // A phone presses ⏭ → same as Next Song on the TV.
+    // Both songs were picked on the TV, so a guest's ⏭ is ignored…
+    act(() => tv.emit('command', { type: 'SKIP_SONG', payload: {}, from: { id: 'phone-mika', name: 'Mika' } }))
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(screen.getByRole('dialog', { name: 'Karaoke Score' })).toBeTruthy()
+
+    // …unless the host lets phones control any song: then ⏭ = Next Song.
+    act(() => updateRoomSettings({ phonesControlAll: true }))
     act(() => tv.emit('command', { type: 'SKIP_SONG', payload: {}, from: { id: 'phone-mika', name: 'Mika' } }))
     expect(await screen.findByText('📱 Mika: next song')).toBeTruthy()
     await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.harana.id))

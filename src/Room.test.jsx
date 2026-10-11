@@ -9,6 +9,11 @@ import { __resetServerStatusForTests } from './hooks/useServerStatus'
 import { __reloadRecentSongsForTests } from './services/historyService'
 
 vi.mock('./services/player/youtubeAdapter', () => import('./test/fakePlayer'))
+// Short waits for a room that disappeared (minutes in the app).
+vi.mock('./config/appConfig', async (importOriginal) => {
+  const mod = await importOriginal()
+  return { ...mod, ROOM_CONFIG: { ...mod.ROOM_CONFIG, remoteWaitMs: 1500, remoteFirstWaitMs: 600, remoteWaitPollMs: 100 } }
+})
 
 let server
 
@@ -103,6 +108,59 @@ describe('Phone Remote — TV side', () => {
     expect(await screen.findByText('📱 Mika skipped “Buwan”')).toBeTruthy()
   })
 
+  it('phones may pause/skip only their own song, unless the host allows any', async () => {
+    renderApp('/')
+    const tv = await waitFor(() => {
+      const host = eventSource('host')
+      expect(host).toBeTruthy()
+      return host
+    })
+    act(() => tv.emit('open'))
+    const mika = { id: 'phone-mika', name: 'Mika' }
+    const jo = { id: 'phone-jo', name: 'Jo' }
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.buwan }, from: mika }))
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.harana }, from: jo }))
+    const queuePanel = within(await screen.findByRole('complementary', { name: 'Song queue' }))
+    expect(await queuePanel.findByText('🎤 Buwan')).toBeTruthy()
+
+    // Jo can't skip Mika's song.
+    act(() => tv.emit('command', { type: 'SKIP_SONG', payload: {}, from: jo }))
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(queuePanel.getByText('🎤 Buwan')).toBeTruthy()
+
+    // The host allows any song (Phone Remote panel → Host settings).
+    fireEvent.click(screen.getAllByRole('button', { name: /Phone Remote room MKH-ABCDEF/ })[0])
+    const panel = within(await screen.findByRole('dialog', { name: '📱 Phone Remote' }))
+    const anySong = panel.getByRole('switch', { name: /Phones can pause or skip any song/ })
+    expect(anySong.getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(anySong)
+    expect(panel.getByText('Anyone with the QR code can pause or skip.')).toBeTruthy()
+    await waitFor(() => expect(publishedStates().at(-1).body.settings).toMatchObject({ phonesControlAll: true }))
+
+    act(() => tv.emit('command', { type: 'SKIP_SONG', payload: {}, from: jo }))
+    expect(await queuePanel.findByText('🎤 Harana')).toBeTruthy()
+  })
+
+  it('after a server restart, the TV asks for its old room code back (phones need no new QR)', async () => {
+    window.localStorage.setItem('mykelkaraokehub:v1:hosted-room', JSON.stringify({ code: 'MKH-ABCDEF', hostToken: 'host-token' }))
+    renderApp('/')
+    const tv = await waitFor(() => {
+      const host = eventSource('host')
+      expect(host).toBeTruthy()
+      return host
+    })
+    // The server refused the stream: the room is gone (restart).
+    act(() => {
+      tv.readyState = 2
+      tv.emit('error')
+    })
+    await waitFor(() => {
+      const create = server.calls.find((c) => c.path === '/api/rooms' && c.method === 'POST')
+      expect(create?.body).toEqual({ code: 'MKH-ABCDEF', hostToken: 'host-token' })
+    })
+    expect(await screen.findByText(/Reconnected to the karaoke server\. Same room/)).toBeTruthy()
+  })
+
   it('an ended room stays ended: the landing page offers to start one instead', async () => {
     renderApp('/')
     const hero = within(screen.getByRole('region', { name: /What do you want to/ }))
@@ -181,9 +239,33 @@ describe('Phone Remote — phone side', () => {
     ])
   })
 
-  it('controls playback and manages your own queued songs', async () => {
-    await openRemote()
+  it('pauses/skips only your own song (unless the host allows any)', async () => {
+    const phone = await openRemote()
     join()
+    // Jo's song is playing: not yours.
+    expect(screen.getByRole('button', { name: 'Skip to the next song' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Pause on TV' }).disabled).toBe(true)
+    expect(screen.getByText('Only the singer can pause or skip this song.')).toBeTruthy()
+
+    // The host allows any song.
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.buwan, requestedBy: { id: 'phone-jo', name: 'Jo' } },
+      isPlaying: true, queue: [], savedSongs: [], recentSongs: [],
+      settings: { phonesControlAll: true, takeTurns: false },
+    }))
+    expect(screen.getByRole('button', { name: 'Skip to the next song' }).disabled).toBe(false)
+    expect(screen.queryByText('Only the singer can pause or skip this song.')).toBeNull()
+  })
+
+  it('controls playback of your song and manages your own queued songs', async () => {
+    const phone = await openRemote()
+    join()
+    act(() => phone.emit('state', {
+      nowPlaying: { song: SONGS.buwan, requestedBy: { id: me.id, name: 'Mika' } },
+      isPlaying: true,
+      queue: [{ entryId: 'e1', song: SONGS.harana, requestedBy: { id: me.id, name: 'Mika' } }],
+      savedSongs: [], recentSongs: [],
+    }))
     fireEvent.click(screen.getByRole('button', { name: 'Skip to the next song' }))
     fireEvent.click(screen.getByRole('button', { name: 'Pause on TV' }))
 
@@ -355,10 +437,20 @@ describe('Phone Remote — phone side', () => {
     }
   })
 
-  it('explains when the room has ended', async () => {
+  it('waits a moment for the TV, then explains when the room has ended', async () => {
     server = installMockServer({ roomExists: false })
     renderApp('/remote/MKH-ZZZZZZ')
-    expect(await screen.findByRole('heading', { name: 'This karaoke room has ended' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Waiting for the TV…' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'This karaoke room has ended' }, { timeout: 3000 })).toBeTruthy()
+  })
+
+  it('reconnects by itself when the TV brings the same room back (server restarted)', async () => {
+    server = installMockServer({ roomExists: false })
+    renderApp('/remote/MKH-ABCDEF')
+    expect(await screen.findByRole('heading', { name: 'Waiting for the TV…' })).toBeTruthy()
+    server.setRoomExists(true) // the TV re-created MKH-ABCDEF
+    await waitFor(() => expect(eventSource('remote')).toBeTruthy(), { timeout: 3000 })
+    expect(screen.queryByRole('heading', { name: 'Waiting for the TV…' })).toBeNull()
   })
 
   it('warns when the TV is offline', async () => {

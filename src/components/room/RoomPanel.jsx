@@ -2,6 +2,9 @@ import { useRoom } from '../../context/RoomContext'
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
 import { QrCode } from './QrCode'
+import { PillSwitch } from '../common/PillSwitch'
+import { useRoomSettings } from '../../services/roomSettings'
+import { IS_HOSTED_SERVER } from '../../services/apiClient'
 import { pluralize } from '../../utils/text'
 import { cx } from '../../utils/classNames'
 
@@ -21,7 +24,8 @@ function isLocalPage() {
 // QR code + room details. Rendered once in the layout; opened from anywhere.
 export function RoomPanel() {
   const { room, status, remotes, joinUrl, lanOrigins, selectedOrigin, setSelectedOrigin, panelOpen, closePanel, closeRoom } = useRoom()
-  const noNetworkAddress = isLocalPage() && lanOrigins.length === 0
+  const noNetworkAddress = !IS_HOSTED_SERVER && isLocalPage() && lanOrigins.length === 0
+  const [settings, updateSettings] = useRoomSettings()
 
   return (
     <Modal
@@ -68,9 +72,35 @@ export function RoomPanel() {
             </label>
           )}
 
+          <section className="room-settings" aria-label="Host settings">
+            <p className="room-card__label">Host settings</p>
+            <PillSwitch
+              checked={settings.phonesControlAll}
+              onChange={(on) => updateSettings({ phonesControlAll: on })}
+              label="Phones can pause or skip any song"
+              ariaLabel="Phones can pause or skip any song (otherwise only the singer's own song)"
+            />
+            <PillSwitch
+              checked={settings.takeTurns}
+              onChange={(on) => updateSettings({ takeTurns: on })}
+              label="Take turns: singers alternate"
+              ariaLabel="Take turns: new songs are queued so singers alternate"
+            />
+            <p className="room-settings__hint">
+              {settings.phonesControlAll ? 'Anyone with the QR code can pause or skip.' : 'Phones can only pause or skip their own song.'}
+              {settings.takeTurns ? ' New songs wait their turn, so one person can’t fill the queue.' : ''}
+            </p>
+          </section>
+
           <ul className="room-card__tips">
-            <li>Phones must be on the <strong>same Wi-Fi</strong> as this computer.</li>
-            <li>If the page won't open on a phone, allow <strong>Node.js</strong> through Windows Firewall for private networks.</li>
+            {IS_HOSTED_SERVER ? (
+              <li>Phones can join from <strong>anywhere</strong>, on any Wi-Fi or mobile data.</li>
+            ) : (
+              <>
+                <li>Phones must be on the <strong>same Wi-Fi</strong> as this computer.</li>
+                <li>If the page won't open on a phone, allow <strong>Node.js</strong> through Windows Firewall for private networks.</li>
+              </>
+            )}
           </ul>
         </div>
       )}

@@ -16,8 +16,10 @@ export const COMMANDS = {
 
 const roomPath = (code) => `/api/rooms/${encodeURIComponent(code)}`
 
-export function createRoom() {
-  return apiPost('/api/rooms')
+// previous: the TV's room before the server restarted. The server gives the
+// same code back when it's free, so phones in the room reconnect by themselves.
+export function createRoom(previous = null) {
+  return apiPost('/api/rooms', previous ? { code: previous.code, hostToken: previous.hostToken } : {})
 }
 
 export function getRoomInfo(code, options) {

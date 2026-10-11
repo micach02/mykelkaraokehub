@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { getItem, setItem, STORAGE_KEYS } from '../../services/storageService'
-import { cx } from '../../utils/classNames'
+import { PillSwitch } from '../common/PillSwitch'
 
 // The video works like a normal YouTube player by default. The "🔒 Lock
 // video" switch (in the player controls) makes it watch-only: no accidental
@@ -35,23 +35,16 @@ export function useVideoLock() {
   return { locked, toggle }
 }
 
-// On/off switch, styled like the Auto-score switch.
 export function VideoLockToggle({ size = 'md' }) {
   const { locked, toggle } = useVideoLock()
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={locked}
-      aria-label="Lock video: taps on the video do nothing, except ad Skip buttons"
-      className={cx('auto-score', `auto-score--${size}`, locked && 'auto-score--on')}
-      onClick={toggle}
+    <PillSwitch
+      checked={locked}
+      onChange={toggle}
+      size={size}
+      label="🔒 Lock video"
+      ariaLabel="Lock video: taps on the video do nothing, except ad Skip buttons"
       title={locked ? 'Video locked (ad Skip buttons still work). Tap to unlock.' : 'Lock the video so taps can’t pause it or open YouTube'}
-    >
-      <span className="auto-score__track" aria-hidden="true">
-        <span className="auto-score__thumb" />
-      </span>
-      <span className="auto-score__label">🔒 Lock video</span>
-    </button>
+    />
   )
 }

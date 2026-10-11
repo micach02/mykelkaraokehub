@@ -110,6 +110,15 @@
   color: var(--text-dim);
 }
 
+/* "Only the singer can pause or skip this song." */
+.remote-now__hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 /* Score screen on the TV, mirrored on the phone */
 .remote-now--results {
   border-color: rgba(252, 209, 22, 0.35);

@@ -41,4 +41,14 @@ export const SEARCH_CONFIG = {
 export const ROOM_CONFIG = {
   // How often the TV may publish its queue to phones (ms).
   publishThrottleMs: 250,
+  // After the server restarts (or a free host wakes up), the TV re-creates
+  // its room with the same code, retrying this many times this far apart.
+  recreateAttempts: 12,
+  recreateRetryMs: 5000,
+  // Phones whose room disappeared wait for the TV to bring it back (checking
+  // every remoteWaitPollMs) before saying the room has ended: longer if they
+  // were in the room, shorter for a fresh scan (e.g. while the server wakes).
+  remoteWaitMs: 120000,
+  remoteFirstWaitMs: 30000,
+  remoteWaitPollMs: 3000,
 }

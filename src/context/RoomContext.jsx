@@ -16,6 +16,7 @@ import {
   toRemoteSong,
 } from '../services/roomService'
 import { ROOM_CONFIG } from '../config/appConfig'
+import { canPhoneControl, canPhoneGoNext, getRoomSettings, useRoomSettings } from '../services/roomSettings'
 
 const RoomContext = createContext(null)
 const MAX_SAVED_SONGS_SHARED = 100
@@ -85,11 +86,11 @@ export function RoomHostProvider({ children }) {
     karaokeRef.current = karaoke
   }, [karaoke])
 
-  const createRoom = useCallback(async ({ openPanel = true, quiet = false } = {}) => {
+  const createRoom = useCallback(async ({ openPanel = true, quiet = false, previous = null } = {}) => {
     setStatus('creating')
     setError(null)
     try {
-      const created = await createRoomRequest()
+      const created = await createRoomRequest(previous)
       saveHostedRoom(created)
       setRoom(created)
       if (openPanel) setPanelOpen(true)
@@ -120,11 +121,23 @@ export function RoomHostProvider({ children }) {
   }, [])
 
   // The room disappeared (usually the karaoke server restarted): start a new one.
+  // Asks for the same code back, so phones reconnect without re-scanning. A
+  // free server may still be waking up: keep trying for about a minute.
   const replaceRoom = useCallback(async () => {
+    const previous = loadHostedRoom()
     saveHostedRoom(null)
     setRoom(null)
-    const created = await createRoom({ openPanel: false, quiet: true })
-    if (created) show('The karaoke server restarted, so there is a new room. Friends need to scan the new QR code.', { variant: 'info', duration: 6000 })
+    let created = null
+    for (let attempt = 0; attempt < ROOM_CONFIG.recreateAttempts && !created; attempt += 1) {
+      if (attempt > 0) await new Promise((resolve) => window.setTimeout(resolve, ROOM_CONFIG.recreateRetryMs))
+      created = await createRoom({ openPanel: false, quiet: true, previous })
+    }
+    if (!created) return
+    if (created.code === previous?.code) {
+      show('Reconnected to the karaoke server. Same room, so phones reconnect by themselves.', { variant: 'info' })
+    } else {
+      show('The karaoke server restarted, so there is a new room. Friends need to scan the new QR code.', { variant: 'info', duration: 6000 })
+    }
   }, [createRoom, show])
 
   // ---- Commands from phones ----
@@ -144,18 +157,28 @@ export function RoomHostProvider({ children }) {
         if (entry && entry.requestedBy?.id === from?.id) actions.removeFromQueue(entry.entryId)
         break
       }
-      case COMMANDS.SKIP_SONG:
-        // On the score screen, ⏭ on a phone is the screen's Next Song button.
+      case COMMANDS.SKIP_SONG: {
+        const settings = getRoomSettings()
+        // On the score screen, ⏭ on a phone is the screen's Next Song button
+        // (for the singer who was scored or the next singer, unless the host
+        // lets everyone).
         if (scoringRef.current?.phase === 'results') {
+          if (!canPhoneGoNext({ settings, scoredRequestedBy: current.currentRequestedBy, nextRequestedBy: current.queue[0]?.requestedBy, phoneId: from?.id })) break
           scoringRef.current.nextSong()
           show(`📱 ${who}: next song`, { variant: 'info' })
-        } else if (current.currentSong) {
+        } else if (current.currentSong && canPhoneControl({ settings, nowPlayingRequestedBy: current.currentRequestedBy, phoneId: from?.id })) {
           actions.skipSong()
           show(`📱 ${who} skipped “${current.currentSong.title}”`, { variant: 'info' })
         }
         break
+      }
       case COMMANDS.TOGGLE_PLAY:
-        if (current.currentSong && scoringRef.current?.phase !== 'results') actions.togglePlay()
+        // Phones pause/resume only their own song, unless the host lets everyone.
+        if (
+          current.currentSong &&
+          scoringRef.current?.phase !== 'results' &&
+          canPhoneControl({ settings: getRoomSettings(), nowPlayingRequestedBy: current.currentRequestedBy, phoneId: from?.id })
+        ) actions.togglePlay()
         break
       default:
         break
@@ -197,7 +220,8 @@ export function RoomHostProvider({ children }) {
 
   // ---- Publish the queue to phones ----
   const results = useMemo(() => buildResults(scoring), [scoring])
-  const snapshot = useMemo(() => ({ ...buildSnapshot(karaoke, library, recent), results }), [karaoke, library, recent, results])
+  const [settings] = useRoomSettings()
+  const snapshot = useMemo(() => ({ ...buildSnapshot(karaoke, library, recent), results, settings }), [karaoke, library, recent, results, settings])
   const snapshotKey = JSON.stringify(snapshot)
   useEffect(() => {
     if (!room || status !== 'live') return undefined

@@ -36,8 +36,10 @@ export function createYouTubeAdapter(container, handlers) {
         player = new YT.Player(mount, {
           width: '100%',
           height: '100%',
-          // Watch-only: the app's controls drive playback (see karaoke.css,
-          // which also makes the video ignore taps and clicks).
+          // YouTube's privacy-enhanced mode: the same videos, less tracking.
+          host: 'https://www.youtube-nocookie.com',
+          // The app's controls drive playback (YouTube's own bar and keyboard
+          // shortcuts are off; see VideoLock.jsx for the optional tap lock).
           playerVars: {
             autoplay: 0,
             controls: 0,

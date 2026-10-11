@@ -19,7 +19,7 @@ function useCountdown(results, receivedAt) {
 
 // The TV is showing a song's score: show it here too. ⏭ is the TV's
 // "Next Song" button (with the same countdown).
-function RemoteResults({ results, receivedAt, next, myId, onNext, disabled }) {
+function RemoteResults({ results, receivedAt, next, myId, onNext, disabled, canNext }) {
   const secondsLeft = useCountdown(results, receivedAt)
   return (
     <section className="remote-now remote-now--results" aria-label="Karaoke score">
@@ -47,19 +47,22 @@ function RemoteResults({ results, receivedAt, next, myId, onNext, disabled }) {
           type="button"
           className="remote-control remote-control--primary remote-control--next"
           onClick={onNext}
-          disabled={disabled || !next}
+          disabled={disabled || !next || !canNext}
           aria-label={secondsLeft != null ? `Next song now (starts by itself in ${secondsLeft} seconds)` : 'Next song now'}
         >
           ⏭ Next song{secondsLeft != null ? ` (${secondsLeft})` : ''}
         </button>
       </div>
+      {next && !canNext && <p className="remote-now__hint">The singer or the next singer can move on.</p>}
     </section>
   )
 }
 
-export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, receivedAt, onTogglePlay, onSkip, disabled }) {
+// canControl: may this phone pause/skip the song now playing? (Its own song,
+// or any song when the host allows it.)
+export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, receivedAt, onTogglePlay, onSkip, disabled, canControl = true, canNext = true }) {
   if (results) {
-    return <RemoteResults results={results} receivedAt={receivedAt} next={next} myId={myId} onNext={onSkip} disabled={disabled} />
+    return <RemoteResults results={results} receivedAt={receivedAt} next={next} myId={myId} onNext={onSkip} disabled={disabled} canNext={canNext} />
   }
   if (!nowPlaying) {
     return (
@@ -87,13 +90,14 @@ export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, r
         )}
       </div>
       <div className="remote-now__controls">
-        <button type="button" className="remote-control remote-control--primary" onClick={onTogglePlay} disabled={disabled} aria-label={isPlaying ? 'Pause on TV' : 'Play on TV'}>
+        <button type="button" className="remote-control remote-control--primary" onClick={onTogglePlay} disabled={disabled || !canControl} aria-label={isPlaying ? 'Pause on TV' : 'Play on TV'}>
           {isPlaying ? '⏸' : '▶'}
         </button>
-        <button type="button" className="remote-control" onClick={onSkip} disabled={disabled} aria-label="Skip to the next song">
+        <button type="button" className="remote-control" onClick={onSkip} disabled={disabled || !canControl} aria-label="Skip to the next song">
           ⏭
         </button>
       </div>
+      {!canControl && <p className="remote-now__hint">Only the singer can pause or skip this song.</p>}
     </section>
   )
 }

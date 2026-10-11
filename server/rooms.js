@@ -4,8 +4,9 @@
 //   TV    ──POST /state─────▶ server ──SSE "state"────▶ phones
 //
 // The TV stays the single source of truth: it applies commands to its own
-// queue and publishes a snapshot. Rooms live in memory; restarting the server
-// ends them (the TV then offers to create a new one).
+// queue and publishes a snapshot. Rooms live in memory; after a restart (or a
+// free host waking up) the TV asks for its old code back, so phones that
+// were in the room reconnect by themselves.
 
 import crypto from 'node:crypto'
 import { ApiError } from './http.js'
@@ -14,6 +15,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I
 const CODE_PATTERN = /^MKH-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/
 const ROOM_IDLE_MS = 12 * 60 * 60 * 1000
+const HOST_TOKEN = /^[0-9a-f]{48}$/
 
 export const REMOTE_COMMANDS = ['ADD_TO_QUEUE', 'REMOVE_FROM_QUEUE', 'SKIP_SONG', 'TOGGLE_PLAY']
 
@@ -114,12 +116,16 @@ export function createRoomStore({ now = () => Date.now() } = {}) {
   sweeper.unref?.()
 
   return {
-    createRoom() {
-      let code = generateRoomCode()
-      while (rooms.has(code)) code = generateRoomCode()
+    // previous: { code, hostToken } of the TV's room before a restart. Reused
+    // when that code is free; otherwise (or with none) a fresh room.
+    createRoom(previous = {}) {
+      const wanted = normalizeRoomCode(previous?.code)
+      const reuse = wanted && !rooms.has(wanted) && HOST_TOKEN.test(String(previous?.hostToken ?? ''))
+      let code = reuse ? wanted : generateRoomCode()
+      while (!reuse && rooms.has(code)) code = generateRoomCode()
       const room = {
         code,
-        hostToken: crypto.randomBytes(24).toString('hex'),
+        hostToken: reuse ? previous.hostToken : crypto.randomBytes(24).toString('hex'),
         state: null,
         hosts: new Set(),
         remotes: new Set(),

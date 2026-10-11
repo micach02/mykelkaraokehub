@@ -23,6 +23,10 @@ export function cleanKaraokeTitle(raw) {
     .join(' | ')
   // Drop leftover standalone noise words.
   text = text.replace(/\b(karaoke|videoke)(\s+version)?\b/gi, ' ').replace(/\bminus[\s-]?one\b/gi, ' ')
+  // Video quality labels are never part of a song's name ("Buko - Jireh Lim HD").
+  text = text.replace(/\b(hd|hq|4k|8k|1080p|720p)\b/gi, ' ')
+  // "Official video", "Lyrics", "MV" … only when they trail the title.
+  text = text.replace(/[\s\-–—|:•]+(official(\s+music)?(\s+(video|audio))?|lyrics?(\s+video)?|with\s+lyrics|mv)\s*$/i, '')
   text = text.replace(/\s{2,}/g, ' ').replace(/^[\s\-–—|:•]+|[\s\-–—|:•]+$/g, '').trim()
   return text || String(raw ?? '').trim()
 }

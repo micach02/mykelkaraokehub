@@ -11,6 +11,7 @@ import { RemoteNameForm } from '../components/remote/RemoteNameForm'
 import { RemoteInvite } from '../components/remote/RemoteInvite'
 import { RemoteTurn, getMyTurn, useTurnAlert } from '../components/remote/RemoteTurn'
 import { IS_HOSTED_SERVER } from '../services/apiClient'
+import { canPhoneControl, canPhoneGoNext } from '../services/roomSettings'
 import { Loading } from '../components/common/Loading'
 import { BRAND } from '../config/appConfig'
 import { cx } from '../utils/classNames'
@@ -49,6 +50,9 @@ export default function Remote() {
     [queue, room?.nowPlaying],
   )
   const tvOffline = hostOnline === false
+  // Phones pause/skip only their own song unless the host lets everyone.
+  const canControl = canPhoneControl({ settings: room?.settings, nowPlayingRequestedBy: room?.nowPlaying?.requestedBy, phoneId: identity.id })
+  const canNext = canPhoneGoNext({ settings: room?.settings, scoredRequestedBy: room?.nowPlaying?.requestedBy, nextRequestedBy: queue[0]?.requestedBy, phoneId: identity.id })
   const turn = useMemo(() => getMyTurn({ nowPlaying: room?.nowPlaying, queue, myId: identity.id }), [room?.nowPlaying, queue, identity.id])
   useTurnAlert(turn, (song) => show(`🎤 It’s your turn! “${song.title}” is starting.`, { duration: 6000 }))
   const songState = useCallback(
@@ -82,6 +86,16 @@ export default function Remote() {
     })
   }, [queuedIds, run, show])
 
+  if (connection === 'waiting') {
+    return (
+      <RemoteMessage
+        icon="⏳"
+        title="Waiting for the TV…"
+        text={`Room ${code} is reconnecting (the karaoke server may be waking up). This page continues by itself.`}
+        action={<span className="spinner" aria-hidden="true" />}
+      />
+    )
+  }
   if (connection === 'not-found') {
     return <RemoteMessage icon="🎤" title="This karaoke room has ended" text="Scan the QR code on the TV again to join." />
   }
@@ -167,6 +181,8 @@ export default function Remote() {
           onTogglePlay={() => run(COMMANDS.TOGGLE_PLAY)}
           onSkip={() => run(COMMANDS.SKIP_SONG, {}, room?.results ? '⏭ Next song' : 'Skipped')}
           disabled={tvOffline || !room?.nowPlaying}
+          canControl={canControl}
+          canNext={canNext}
         />
       )}
       {tab !== 'invite' && !room?.results && <RemoteTurn turn={turn} />}

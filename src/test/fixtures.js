@@ -43,6 +43,7 @@ export function installMockServer({
 } = {}) {
   const calls = []
   const searched = new Set()
+  const rooms = { exists: roomExists } // tests flip this to bring a room back
   const json = (status, body) => ({ ok: status < 400, status, json: async () => body })
 
   const fetchMock = vi.fn(async (input, init = {}) => {
@@ -67,7 +68,7 @@ export function installMockServer({
       return json(200, { query: q, results: results[q] ?? [], cached: false })
     }
     if (url.pathname === '/api/rooms' && method === 'POST') return json(201, room)
-    if (/^\/api\/rooms\/[^/]+/.test(url.pathname) && !roomExists) {
+    if (/^\/api\/rooms\/[^/]+/.test(url.pathname) && !rooms.exists) {
       return json(404, { error: { code: 'room-not-found', message: 'This karaoke room no longer exists.' } })
     }
     if (/^\/api\/rooms\/[^/]+$/.test(url.pathname)) return json(200, { code: room.code, hostOnline: true, remotes: 0 })
@@ -77,7 +78,7 @@ export function installMockServer({
   })
 
   vi.stubGlobal('fetch', fetchMock)
-  return { calls, searched, fetchMock }
+  return { calls, searched, fetchMock, setRoomExists: (value) => { rooms.exists = value } }
 }
 
 // YouTube search requests, optionally of one mode ('live' | 'full' | 'cache').

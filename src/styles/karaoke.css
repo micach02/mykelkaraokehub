@@ -1027,6 +1027,23 @@
 }
 
 /* QR card in the Karaoke Mode deck */
+/* Host settings in the Phone Remote panel */
+.room-settings {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.room-settings__hint {
+  max-width: 34ch;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .room-qr-card {
   display: flex;
   align-items: center;

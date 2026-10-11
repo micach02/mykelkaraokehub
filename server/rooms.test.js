@@ -39,6 +39,24 @@ describe('room store', () => {
     expect(store.getRoomInfo(code)).toEqual({ code, hostOnline: false, remotes: 0 })
   })
 
+  it('gives a TV its old room code back after a restart, but never someone else’s live room', () => {
+    const before = createRoomStore()
+    const old = before.createRoom()
+    before.close()
+
+    // Server restarted: the TV asks for its previous room.
+    store = createRoomStore()
+    expect(store.createRoom(old)).toEqual(old)
+    expect(store.getRoomInfo(old.code).code).toBe(old.code)
+
+    // That code is taken now: another request gets a fresh room.
+    const other = store.createRoom(old)
+    expect(other.code).not.toBe(old.code)
+    // Malformed requests also get a fresh room.
+    expect(store.createRoom({ code: 'NOPE', hostToken: 'x' }).code).toMatch(/^MKH-[A-Z2-9]{6}$/)
+    expect(store.createRoom({ code: 'MKH-ZZZZZZ', hostToken: 'short' }).code).not.toBe('MKH-ZZZZZZ')
+  })
+
   it('relays phone commands to the TV and TV state to phones', () => {
     store = createRoomStore()
     const { code, hostToken } = store.createRoom()

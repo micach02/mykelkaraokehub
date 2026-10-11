@@ -16,6 +16,11 @@ describe('karaoke titles', () => {
     expect(cleanKaraokeTitle('Buwan - Juan Karlos (Karaoke Version)')).toBe('Buwan - Juan Karlos')
     expect(cleanKaraokeTitle('Mundo | IV of Spades | Videoke HD')).toBe('Mundo | IV of Spades')
     expect(cleanKaraokeTitle('KARAOKE Harana - Parokya ni Edgar [HD]')).toBe('Harana - Parokya ni Edgar')
+    // Leftover quality labels and trailing "official"/"lyrics" words.
+    expect(cleanKaraokeTitle('BUKO - Jireh Lim HD KARAOKE')).toBe('BUKO - Jireh Lim')
+    expect(cleanKaraokeTitle('Tadhana - Up Dharma Down 4K Karaoke Lyrics')).toBe('Tadhana - Up Dharma Down')
+    expect(cleanKaraokeTitle('Pagtingin Karaoke Official Video')).toBe('Pagtingin')
+    expect(cleanKaraokeTitle('Lyrics of Love (Karaoke)')).toBe('Lyrics of Love') // a song's own words stay
     expect(cleanKaraokeTitle('Tadhana 【Minus One】')).toBe('Tadhana')
     expect(cleanKaraokeTitle('Kathang Isip (Acoustic)')).toBe('Kathang Isip (Acoustic)')
   })

@@ -39,7 +39,8 @@ export function createKaraokeApi({ youtube, rooms, getLanOriginsFn = getLanOrigi
     }
 
     if (pathname === '/api/rooms' && method === 'POST') {
-      return sendJson(res, 201, rooms.createRoom())
+      // Optional body { code, hostToken }: the TV's room before a restart.
+      return sendJson(res, 201, rooms.createRoom(await readJson(req)))
     }
 
     const match = ROOM_ROUTE.exec(pathname)

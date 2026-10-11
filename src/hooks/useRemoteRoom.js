@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getRemoteIdentity, getRoomInfo, getSungSongs, openRoomEvents, recordSungSong, saveRemoteName, sendRoomCommand } from '../services/roomService'
+import { IS_HOSTED_SERVER } from '../services/apiClient'
+import { ROOM_CONFIG } from '../config/appConfig'
+
+// The room may only be gone for a moment: the server restarted (the TV brings
+// the same code back) or the free host is waking up.
+const isTemporary = (error) => error?.code === 'room-not-found' || (IS_HOSTED_SERVER && error?.code === 'server-offline')
 
 /**
  * Phone side of a karaoke room.
  *
- * connection: 'connecting' | 'live' | 'reconnecting' | 'not-found' | 'error'
+ * connection: 'connecting' | 'live' | 'reconnecting' | 'waiting' (room gone for
+ *             now; the TV is expected back) | 'not-found' | 'error'
  * room: the TV's latest snapshot { nowPlaying, isPlaying, queue, savedSongs,
  *       recentSongs, results } plus receivedAt (this phone's clock)
  * sungSongs: songs this person sang (their requests that played), newest first
@@ -16,6 +23,35 @@ export function useRemoteRoom(code) {
   const [hostOnline, setHostOnline] = useState(null)
   const [attempt, setAttempt] = useState(0)
   const [sungSongs, setSungSongs] = useState(getSungSongs)
+  const wasLive = useRef(false)
+  const waitingSince = useRef(null)
+
+  // Room gone? Wait for the TV for a while instead of giving up at once.
+  const lost = useCallback((error) => {
+    if (!isTemporary(error)) {
+      setConnection('error')
+      return
+    }
+    waitingSince.current ??= Date.now()
+    setConnection('waiting')
+  }, [])
+
+  useEffect(() => {
+    if (connection !== 'waiting') return undefined
+    const limit = wasLive.current ? ROOM_CONFIG.remoteWaitMs : ROOM_CONFIG.remoteFirstWaitMs
+    const timer = window.setInterval(() => {
+      getRoomInfo(code).then(
+        () => setAttempt((n) => n + 1), // it's back: reconnect
+        (error) => {
+          if (Date.now() - waitingSince.current < limit && isTemporary(error)) return
+          window.clearInterval(timer)
+          waitingSince.current = null
+          setConnection(error.code === 'room-not-found' ? 'not-found' : 'error')
+        },
+      )
+    }, ROOM_CONFIG.remoteWaitPollMs)
+    return () => window.clearInterval(timer)
+  }, [connection, code])
 
   useEffect(() => {
     let disposed = false
@@ -27,17 +63,19 @@ export function useRemoteRoom(code) {
         if (disposed) return
         setHostOnline(info.hostOnline)
         close = openRoomEvents(code, { role: 'remote' }, {
-          onOpen: () => !disposed && setConnection('live'),
+          onOpen: () => {
+            if (disposed) return
+            wasLive.current = true
+            waitingSince.current = null
+            setConnection('live')
+          },
           state: (snapshot) => setRoom({ ...snapshot, receivedAt: Date.now() }),
           presence: (presence) => setHostOnline(presence.hostOnline),
           onError: (source) => {
             if (disposed) return
             // CLOSED: the server refused (room gone). Otherwise it retries itself.
             if (source.readyState === 2) {
-              getRoomInfo(code).then(
-                () => setAttempt((n) => n + 1),
-                (error) => setConnection(error.code === 'room-not-found' ? 'not-found' : 'error'),
-              )
+              getRoomInfo(code).then(() => setAttempt((n) => n + 1), (error) => !disposed && lost(error))
             } else {
               setConnection('reconnecting')
             }
@@ -45,14 +83,14 @@ export function useRemoteRoom(code) {
         })
       })
       .catch((error) => {
-        if (!disposed) setConnection(error.code === 'room-not-found' ? 'not-found' : 'error')
+        if (!disposed) lost(error)
       })
 
     return () => {
       disposed = true
       close()
     }
-  }, [code, attempt])
+  }, [code, attempt, lost])
 
   // My request started playing on the TV → it's one of my sung songs.
   const playing = room?.nowPlaying
