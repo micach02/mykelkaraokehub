@@ -114,6 +114,6 @@ export function recordSungSong(song) {
 // Song fields worth sending to phones (keeps snapshots small).
 export function toRemoteSong(song) {
   if (!song) return null
-  const { id, title, artist, channel, isOPM, youtubeVideoId, thumbnail } = song
-  return { id, title, artist, channel, isOPM, youtubeVideoId, thumbnail }
+  const { id, title, artist, channel, isOPM, youtubeVideoId, thumbnail, duration = null } = song
+  return { id, title, artist, channel, isOPM, youtubeVideoId, thumbnail, duration }
 }

@@ -355,7 +355,7 @@ describe('Phone Remote — phone side', () => {
       const phone = await openRemote()
       join()
       // openRemote: Jo's song is playing; Mika's Harana is first in line.
-      expect(screen.getByText('⏭ You’re up next. Get ready!')).toBeTruthy()
+      expect(screen.getByText(/⏭ You’re up next, in about \d+ min\. Get ready!/)).toBeTruthy()
 
       act(() => phone.emit('state', {
         nowPlaying: { song: SONGS.buwan, requestedBy: { id: 'phone-jo', name: 'Jo' } },
@@ -366,7 +366,7 @@ describe('Phone Remote — phone side', () => {
         ],
         savedSongs: [], recentSongs: [],
       }))
-      expect(screen.getByText('🎶 Your next song is #2 in line')).toBeTruthy()
+      expect(screen.getByText(/🎶 Your next song is #2 in line, in about \d+ min/)).toBeTruthy()
 
       // Mika's song starts: banner, message, and a buzz (once).
       const mine = { nowPlaying: { song: SONGS.harana, requestedBy: { id: me.id, name: 'Mika' } }, isPlaying: true, queue: [], savedSongs: [], recentSongs: [] }

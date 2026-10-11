@@ -71,7 +71,7 @@ export function RoomHostProvider({ children }) {
   const library = useLibrarySongs()
   const recent = useRecentSongs()
   const { show } = useToast()
-  const { lanOrigins } = useServerStatus()
+  const { lanOrigins, status: serverStatus } = useServerStatus()
   const scoring = useOptionalScoring()
   const scoringRef = useRef(scoring)
   useLayoutEffect(() => {
@@ -115,6 +115,14 @@ export function RoomHostProvider({ children }) {
     autoStartedRef.current = true
     if (!room) createRoom({ openPanel: false, quiet: true })
   }, [room, createRoom])
+
+  // The first try failed because the server was asleep: try again once it
+  // answers (it was woken by the status checks).
+  useEffect(() => {
+    if (serverStatus && autoStartedRef.current && !room && status === 'error' && error?.code === 'server-offline') {
+      createRoom({ openPanel: false, quiet: true })
+    }
+  }, [serverStatus, room, status, error, createRoom])
 
   const closeRoom = useCallback(() => {
     saveHostedRoom(null)
@@ -245,10 +253,24 @@ export function RoomHostProvider({ children }) {
     [karaoke, library, recent, results, settings, leaderboard],
   )
   const snapshotKey = JSON.stringify(snapshot)
+
+  // Re-send now and then while a song plays (time left changes by itself).
+  const [refreshTick, setRefreshTick] = useState(0)
+  useEffect(() => {
+    if (!room || !karaoke.isPlaying) return undefined
+    const timer = window.setInterval(() => setRefreshTick((n) => n + 1), ROOM_CONFIG.refreshWhilePlayingMs)
+    return () => window.clearInterval(timer)
+  }, [room, karaoke.isPlaying])
+
   useEffect(() => {
     if (!room || status !== 'live') return undefined
     const timer = window.setTimeout(() => {
       const state = JSON.parse(snapshotKey)
+      // Seconds left in the current song, as of now (phones count down).
+      if (state.nowPlaying) {
+        const { current = 0, duration = 0 } = actions.getProgress?.() ?? {}
+        state.nowPlaying.remaining = duration > 0 ? Math.max(0, Math.round(duration - current)) : null
+      }
       if (state.results) {
         const { autoNextAt, ...rest } = state.results
         state.results = { ...rest, nextInSeconds: autoNextAt ? Math.max(0, Math.round((autoNextAt - Date.now()) / 1000)) : null }
@@ -258,7 +280,7 @@ export function RoomHostProvider({ children }) {
       })
     }, ROOM_CONFIG.publishThrottleMs)
     return () => window.clearTimeout(timer)
-  }, [room, status, snapshotKey, connectionId, replaceRoom])
+  }, [room, status, snapshotKey, connectionId, replaceRoom, refreshTick, actions])
 
   const origin = selectedOrigin && lanOrigins.includes(selectedOrigin) ? selectedOrigin : lanOrigins[0] ?? null
   const value = useMemo(() => ({

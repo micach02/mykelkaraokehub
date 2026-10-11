@@ -74,7 +74,7 @@ describe('karaoke API', () => {
     const { body } = await getJson('/api/youtube/search?q=Harana')
     expect(body.results[0]).toMatchObject({ title: 'Harana', artist: 'Parokya ni Edgar' })
     expect((await getJson('/api/youtube/search?q=harana&cacheOnly=1')).body.cached).toBe(true)
-    expect(fetchYouTube).toHaveBeenCalledTimes(1)
+    expect(fetchYouTube.mock.calls.filter(([url]) => String(url).includes('/search'))).toHaveLength(1)
     expect((await getJson('/api/youtube/recent')).body.queries).toEqual(['Harana'])
   })
 

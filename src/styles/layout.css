@@ -296,3 +296,35 @@
     display: flex;
   }
 }
+
+/* "Waking up the karaoke server…" (online version, free hosting) */
+.server-waking {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px var(--gutter);
+  padding: 10px 16px;
+  border: 1px solid rgba(61, 217, 255, 0.35);
+  border-radius: var(--radius);
+  background: rgba(10, 24, 36, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.server-waking strong {
+  display: block;
+}
+
+.server-waking__text {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.server-waking__spinner {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}

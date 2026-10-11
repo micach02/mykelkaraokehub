@@ -830,6 +830,12 @@
   color: var(--text-dim);
 }
 
+/* TV remote navigation: a bold focus ring, easy to see from the couch. */
+.app--karaoke :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
 /* While a song plays and nobody touches anything, fade the deck and hide
    the cursor. No layout shift, so on-video lyrics are never covered. */
 .app--controls-hidden {

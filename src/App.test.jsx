@@ -166,6 +166,20 @@ describe('myKelKaraokeHub (TV)', () => {
     expect(shields()).toHaveLength(0)
   })
 
+  it('offers "Install app" when the browser can install it', async () => {
+    renderApp()
+    expect(screen.queryByRole('button', { name: 'Install myKel Karaoke as an app' })).toBeNull()
+    const prompt = vi.fn()
+    const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), { prompt, userChoice: Promise.resolve({ outcome: 'accepted' }) })
+    act(() => {
+      window.dispatchEvent(event)
+    })
+    expect(event.defaultPrevented).toBe(true) // we show our own button instead of the browser's mini-bar
+    fireEvent.click(await screen.findByRole('button', { name: 'Install myKel Karaoke as an app' }))
+    expect(prompt).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Install myKel Karaoke as an app' })).toBeNull())
+  })
+
   it('Play Now keeps the queue; skip, reorder, remove, and clear work', async () => {
     renderApp()
     const results = await searchYouTube('opm')

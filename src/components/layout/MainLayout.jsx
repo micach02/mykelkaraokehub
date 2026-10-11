@@ -15,8 +15,10 @@ import { Loading } from '../common/Loading'
 import { useKaraokeActions, useKaraokeState } from '../../context/KaraokeContext'
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { useIdle } from '../../hooks/useIdle'
+import { useSpatialNavigation } from '../../hooks/useSpatialNavigation'
 import { exitFullscreen, getFullscreenElement } from '../../utils/fullscreen'
 import { cx } from '../../utils/classNames'
+import { ServerWaking } from './ServerWaking'
 
 // App shell. The player is rendered here, in the same tree position on every
 // page, so it never remounts: navigating or entering Karaoke Mode only changes
@@ -61,6 +63,9 @@ export function MainLayout() {
     })
   }, [isKaraokeMode, navigate])
 
+  // TV remote D-pad: arrows move between controls in Karaoke Mode.
+  useSpatialNavigation(isKaraokeMode)
+
   useKeyboardShortcuts({
     '/': () => {
       const input = document.getElementById(GLOBAL_SEARCH_ID)
@@ -85,6 +90,7 @@ export function MainLayout() {
     >
       <a href="#main" className="skip-link">Skip to content</a>
       {!isKaraokeMode && <Header />}
+      <ServerWaking />
 
       <div className="app__top">
         <PlayerStage isKaraokeMode={isKaraokeMode} onBrowse={browse} />

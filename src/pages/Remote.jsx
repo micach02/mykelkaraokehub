@@ -197,7 +197,9 @@ export default function Remote() {
           canNext={canNext}
         />
       )}
-      {tab !== 'invite' && !room?.results && <RemoteTurn turn={turn} />}
+      {tab !== 'invite' && !room?.results && (
+        <RemoteTurn turn={turn} nowPlaying={room?.nowPlaying} isPlaying={Boolean(room?.isPlaying)} receivedAt={room?.receivedAt} />
+      )}
 
       <main className="remote__main">
         {tab === 'search' && (

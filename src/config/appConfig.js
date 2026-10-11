@@ -51,4 +51,7 @@ export const ROOM_CONFIG = {
   remoteWaitMs: 120000,
   remoteFirstWaitMs: 30000,
   remoteWaitPollMs: 3000,
+  // While a song plays, the TV re-sends its state this often so phones'
+  // "your turn in about N min" stays accurate (also for phones joining late).
+  refreshWhilePlayingMs: 30000,
 }

@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { createYouTubeSearch, msUntilQuotaReset } from './youtubeSearch.js'
+import { createYouTubeSearch, msUntilQuotaReset, parseIsoDuration } from './youtubeSearch.js'
 
 export const sampleResponse = {
   items: [
@@ -23,6 +23,9 @@ const fail = (status, reason, message = '', detailReason) => ({
   status,
   json: async () => ({ error: { code: status, message, errors: [{ reason }], details: detailReason ? [{ reason: detailReason }] : [] } }),
 })
+
+// Searches made (each also asks the videos API for song lengths).
+const searchCalls = (fetchImpl) => fetchImpl.mock.calls.filter(([url]) => String(url).includes('/search')).length
 
 function setup({ apiKey = 'key', cacheFile = null, response = ok(sampleResponse) } = {}) {
   const fetchImpl = vi.fn(async () => response)
@@ -50,7 +53,7 @@ describe('server YouTube search', () => {
     await youtube.search('Buwan')
     expect((await youtube.search('  BUWAN ', { cacheOnly: true })).cached).toBe(true)
     await youtube.search('buwan')
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(searchCalls(fetchImpl)).toBe(1)
     expect(youtube.recent()).toEqual(['Buwan'])
   })
 
@@ -70,7 +73,7 @@ describe('server YouTube search', () => {
     await expect(youtube.search('Harana')).rejects.toMatchObject({ code: 'quota', status: 429 })
     expect(youtube.status().quota.blocked).toBe(true)
     await expect(youtube.search('Tadhana')).rejects.toMatchObject({ code: 'quota' })
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(searchCalls(fetchImpl)).toBe(1)
   })
 
   it('explains a website-restricted key', async () => {
@@ -91,6 +94,29 @@ describe('server YouTube search', () => {
 
   it('computes the time until the quota resets', () => {
     expect(msUntilQuotaReset(new Date('2026-10-03T12:00:00Z'))).toBe(19 * 60 * 60 * 1000) // 05:00 Pacific
+  })
+})
+
+describe('song lengths', () => {
+  it('reads YouTube durations', () => {
+    expect(parseIsoDuration('PT4M13S')).toBe(253)
+    expect(parseIsoDuration('PT1H2M')).toBe(3720)
+    expect(parseIsoDuration('P1D')).toBeNull()
+    expect(parseIsoDuration(undefined)).toBeNull()
+  })
+
+  it('adds each result’s length (1 cheap extra request); unknown stays null', async () => {
+    const fetchImpl = vi.fn(async (url) =>
+      String(url).includes('/videos')
+        ? ok({ items: [{ id: 'AAAAAAAAAAA', contentDetails: { duration: 'PT4M13S' } }] })
+        : ok(sampleResponse),
+    )
+    const youtube = createYouTubeSearch({ apiKey: 'key', fetchImpl })
+    const { results } = await youtube.search('Buwan')
+    expect(results.map((s) => s.duration)).toEqual([253, null])
+    const videos = new URL(fetchImpl.mock.calls[1][0])
+    expect(videos.searchParams.get('part')).toBe('contentDetails')
+    expect(videos.searchParams.get('id')).toBe('AAAAAAAAAAA,CCCCCCCCCCC')
   })
 })
 
@@ -120,10 +146,10 @@ describe('live search (as you type)', () => {
     const result = await youtube.search('kathang isip', { mode: 'live' })
     expect(result).toMatchObject({ cached: true, derived: true })
     expect(result.results.map((s) => s.title)).toEqual(['Kathang Isip', 'Kathang Isip Acoustic', 'Kathang Isip Piano'])
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(searchCalls(fetchImpl)).toBe(1)
     // Enter (full) asks YouTube for the exact query.
     await youtube.search('kathang isip', { mode: 'full' })
-    expect(fetchImpl).toHaveBeenCalledTimes(2)
+    expect(searchCalls(fetchImpl)).toBe(2)
   })
 
   it('waits for 3+ characters before spending quota', async () => {
@@ -139,7 +165,7 @@ describe('live search (as you type)', () => {
     await youtube.search('song two', { mode: 'live' })
     expect(youtube.status().live).toEqual({ limit: 2, used: 2, remaining: 0 })
     expect(await youtube.search('song three', { mode: 'live' })).toMatchObject({ results: null, liveLimited: true })
-    expect(fetchImpl).toHaveBeenCalledTimes(2)
+    expect(searchCalls(fetchImpl)).toBe(2)
     expect((await youtube.search('song three', { mode: 'full' })).results).toHaveLength(2)
   })
 

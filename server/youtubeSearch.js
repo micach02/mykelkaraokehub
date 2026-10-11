@@ -23,6 +23,9 @@ import { decodeHtmlEntities, normalizeText } from '../src/utils/text.js'
 import { findKnownArtist } from '../src/utils/artistLookup.js'
 
 const DATA_API = 'https://www.googleapis.com/youtube/v3/search'
+// Song lengths (for "your turn in about 8 min"): 1 quota unit per call, vs
+// 100 for a search.
+const VIDEOS_API = 'https://www.googleapis.com/youtube/v3/videos'
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -76,7 +79,16 @@ export function toSong(item) {
     source: 'youtube',
     youtubeVideoId: videoId,
     thumbnail: snippet.thumbnails?.high?.url ?? snippet.thumbnails?.medium?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    duration: null, // filled in from the videos API (seconds)
   }
+}
+
+// YouTube's ISO 8601 durations: "PT4M13S" → 253 seconds (null if unknown).
+export function parseIsoDuration(value) {
+  const match = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(String(value ?? ''))
+  if (!match) return null
+  const seconds = Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0)
+  return seconds > 0 ? seconds : null
 }
 
 async function readErrorBody(response) {
@@ -187,6 +199,23 @@ export function createYouTubeSearch({ apiKey = '', cacheFile = null, fetchImpl =
     scheduleSave()
   }
 
+  // Best effort: { videoId → seconds }. A failure just leaves lengths unknown.
+  async function fetchDurations(videoIds) {
+    if (!videoIds.length) return new Map()
+    try {
+      const url = new URL(VIDEOS_API)
+      url.searchParams.set('part', 'contentDetails')
+      url.searchParams.set('id', videoIds.join(','))
+      url.searchParams.set('key', key)
+      const response = await fetchImpl(url)
+      if (!response.ok) return new Map()
+      const data = await response.json()
+      return new Map((data.items ?? []).map((item) => [item.id, parseIsoDuration(item.contentDetails?.duration)]))
+    } catch {
+      return new Map()
+    }
+  }
+
   function quotaError() {
     return new ApiError(429, 'quota', "Today's YouTube search limit has been reached. Saved songs and earlier searches still work.")
   }
@@ -280,6 +309,10 @@ export function createYouTubeSearch({ apiKey = '', cacheFile = null, fetchImpl =
         .filter((item) => isLikelyKaraoke(decodeHtmlEntities(item.snippet?.title), decodeHtmlEntities(item.snippet?.channelTitle)))
         .slice(0, config.maxResults)
         .map(toSong)
+      const durations = await fetchDurations(results.map((song) => song.youtubeVideoId))
+      results.forEach((song) => {
+        song.duration = durations.get(song.youtubeVideoId) ?? null
+      })
 
       const entry = { query, at: now(), results }
       if (searchMode === 'full') markChosen(entry)

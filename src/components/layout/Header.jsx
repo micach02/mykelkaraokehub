@@ -4,6 +4,7 @@ import { NAV_ITEMS } from './navItems'
 import { SearchBar } from '../songs/SearchBar'
 import { Button } from '../common/Button'
 import { RoomButton } from '../room/RoomButton'
+import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { useSearchQuery } from '../../hooks/useSearchQuery'
 import { useKaraokeState } from '../../context/KaraokeContext'
 import { enterFullscreen } from '../../utils/fullscreen'
@@ -11,6 +12,7 @@ import { cx } from '../../utils/classNames'
 import { GLOBAL_SEARCH_ID, HOME_SEARCH_ID } from '../../config/domIds'
 
 export function Header() {
+  const { canInstall, install } = useInstallPrompt()
   const { query, setQuery, submitQuery } = useSearchQuery()
   const { queue } = useKaraokeState()
   const navigate = useNavigate()
@@ -59,6 +61,11 @@ export function Header() {
       />
 
       <div className="header__actions">
+        {canInstall && (
+          <Button variant="ghost" size="sm" icon="📲" onClick={install} aria-label="Install myKel Karaoke as an app">
+            Install app
+          </Button>
+        )}
         <RoomButton size="sm" />
         <Button variant="primary" size="sm" icon="🎤" onClick={openKaraokeMode}>Karaoke Mode</Button>
       </div>
