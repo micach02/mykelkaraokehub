@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useRemoteRoom } from '../hooks/useRemoteRoom'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -10,6 +10,7 @@ import { RemoteQueue } from '../components/remote/RemoteQueue'
 import { RemoteNameForm } from '../components/remote/RemoteNameForm'
 import { RemoteInvite } from '../components/remote/RemoteInvite'
 import { RemoteTurn, getMyTurn, useTurnAlert } from '../components/remote/RemoteTurn'
+import { Leaderboard } from '../components/scoring/Leaderboard'
 import { IS_HOSTED_SERVER } from '../services/apiClient'
 import { canPhoneControl, canPhoneGoNext } from '../services/roomSettings'
 import { Loading } from '../components/common/Loading'
@@ -70,6 +71,16 @@ export default function Remote() {
       return false
     }
   }, [send, show])
+
+  // Reactions go straight to the TV (no message here); at most ~2 per second.
+  const lastReaction = useRef(0)
+  const react = useCallback((emoji) => {
+    const now = Date.now()
+    if (now - lastReaction.current < 500) return
+    lastReaction.current = now
+    navigator.vibrate?.(10)
+    send(COMMANDS.REACT, { emoji }).catch(() => {})
+  }, [send])
 
   const addSong = useCallback(async (song) => {
     if (queuedIds.has(song.id)) {
@@ -180,6 +191,7 @@ export default function Remote() {
           receivedAt={room?.receivedAt}
           onTogglePlay={() => run(COMMANDS.TOGGLE_PLAY)}
           onSkip={() => run(COMMANDS.SKIP_SONG, {}, room?.results ? '⏭ Next song' : 'Skipped')}
+          onReact={room?.nowPlaying ? react : undefined}
           disabled={tvOffline || !room?.nowPlaying}
           canControl={canControl}
           canNext={canNext}
@@ -204,7 +216,14 @@ export default function Remote() {
             myId={identity.id}
             disabled={tvOffline}
             onRemove={(entry) => run(COMMANDS.REMOVE_FROM_QUEUE, { entryId: entry.entryId }, `Removed “${entry.song.title}”`)}
+            onSetDuet={(entry, partner) => run(COMMANDS.SET_DUET, { entryId: entry.entryId, partner }, partner ? `🎤🎤 Duet with ${partner}` : 'Duet removed')}
           />
+        )}
+        {tab === 'queue' && room?.leaderboard?.length > 0 && (
+          <section aria-labelledby="remote-leaderboard">
+            <h2 id="remote-leaderboard" className="remote-heading">🏆 Tonight’s top scores</h2>
+            <Leaderboard entries={room.leaderboard} />
+          </section>
         )}
         {tab === 'invite' && <RemoteInvite code={code} />}
       </main>

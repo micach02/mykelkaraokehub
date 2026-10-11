@@ -10,6 +10,7 @@
 
 import crypto from 'node:crypto'
 import { ApiError } from './http.js'
+import { REACTIONS } from '../src/utils/reactions.js'
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I
 const CODE_PATTERN = /^MKH-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -17,7 +18,8 @@ const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/
 const ROOM_IDLE_MS = 12 * 60 * 60 * 1000
 const HOST_TOKEN = /^[0-9a-f]{48}$/
 
-export const REMOTE_COMMANDS = ['ADD_TO_QUEUE', 'REMOVE_FROM_QUEUE', 'SKIP_SONG', 'TOGGLE_PLAY']
+export const REMOTE_COMMANDS = ['ADD_TO_QUEUE', 'REMOVE_FROM_QUEUE', 'SKIP_SONG', 'TOGGLE_PLAY', 'SET_DUET', 'REACT']
+const MAX_SONG_SECONDS = 6 * 60 * 60
 
 export function generateRoomCode() {
   const bytes = crypto.randomBytes(6)
@@ -49,6 +51,8 @@ export function sanitizeSong(song) {
     source: 'youtube',
     youtubeVideoId: song.youtubeVideoId,
     thumbnail: thumbnail.startsWith('https://i.ytimg.com/') ? thumbnail : null,
+    // Length in seconds (for "your turn in about 8 min"), when known.
+    duration: Number.isFinite(song.duration) && song.duration > 0 && song.duration < MAX_SONG_SECONDS ? Math.round(song.duration) : null,
   }
 }
 
@@ -70,6 +74,15 @@ export function sanitizeCommand(command) {
     case 'REMOVE_FROM_QUEUE': {
       const entryId = text(command.payload?.entryId, 120)
       return entryId ? { type: command.type, payload: { entryId }, from } : null
+    }
+    // Duet partner for one of your queued songs ('' removes it).
+    case 'SET_DUET': {
+      const entryId = text(command.payload?.entryId, 120)
+      return entryId ? { type: command.type, payload: { entryId, partner: text(command.payload?.partner, 40) }, from } : null
+    }
+    case 'REACT': {
+      const emoji = command.payload?.emoji
+      return REACTIONS.includes(emoji) ? { type: command.type, payload: { emoji }, from } : null
     }
     default:
       return { type: command.type, payload: {}, from }

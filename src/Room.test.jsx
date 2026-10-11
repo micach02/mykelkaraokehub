@@ -141,6 +141,53 @@ describe('Phone Remote — TV side', () => {
     expect(await queuePanel.findByText('🎤 Harana')).toBeTruthy()
   })
 
+  it('shows reactions from phones floating over the video', async () => {
+    renderApp('/')
+    const tv = await waitFor(() => {
+      const host = eventSource('host')
+      expect(host).toBeTruthy()
+      return host
+    })
+    act(() => tv.emit('open'))
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.buwan }, from: { id: 'phone-mika', name: 'Mika' } }))
+    await screen.findByText('📱 Mika started “Buwan”')
+    act(() => tv.emit('command', { type: 'REACT', payload: { emoji: '🔥' }, from: { id: 'phone-jo', name: 'Jo' } }))
+    const layer = await waitFor(() => {
+      const el = document.querySelector('.reaction-layer')
+      expect(el).toBeTruthy()
+      return el
+    })
+    expect(layer.textContent).toContain('🔥')
+    expect(layer.textContent).toContain('Jo')
+    expect(layer.closest('[aria-label="Karaoke player"]')).toBeTruthy()
+  })
+
+  it('shows duets ("Mika & Jo") set from the singer’s phone only', async () => {
+    renderApp('/')
+    const tv = await waitFor(() => {
+      const host = eventSource('host')
+      expect(host).toBeTruthy()
+      return host
+    })
+    act(() => tv.emit('open'))
+    const mika = { id: 'phone-mika', name: 'Mika' }
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.buwan }, from: { id: 'phone-ana', name: 'Ana' } }))
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.harana }, from: mika }))
+    const queuePanel = within(await screen.findByRole('complementary', { name: 'Song queue' }))
+    await queuePanel.findByText('Harana')
+    const entryId = await waitFor(() => {
+      const id = publishedStates().at(-1)?.body.queue[0]?.entryId
+      expect(id).toBeTruthy()
+      return id
+    })
+
+    // Someone else can't make Mika's song a duet; Mika can.
+    act(() => tv.emit('command', { type: 'SET_DUET', payload: { entryId, partner: 'Troll' }, from: { id: 'phone-x', name: 'X' } }))
+    act(() => tv.emit('command', { type: 'SET_DUET', payload: { entryId, partner: 'Jo' }, from: mika }))
+    expect(await queuePanel.findByTitle('Requested by Mika, a duet with Jo')).toBeTruthy()
+    await waitFor(() => expect(publishedStates().at(-1).body.queue[0].duetWith).toBe('Jo'))
+  })
+
   it('after a server restart, the TV asks for its old room code back (phones need no new QR)', async () => {
     window.localStorage.setItem('mykelkaraokehub:v1:hosted-room', JSON.stringify({ code: 'MKH-ABCDEF', hostToken: 'host-token' }))
     renderApp('/')
@@ -342,6 +389,46 @@ describe('Phone Remote — phone side', () => {
     expect(artists().length).toBeGreaterThan(8)
     fireEvent.click(screen.getByRole('button', { name: /Fewer artists/ }))
     expect(artists()).toHaveLength(8)
+  })
+
+  it('sends reactions to the TV (a couple per second at most)', async () => {
+    await openRemote()
+    join()
+    const reactions = within(screen.getByRole('group', { name: 'Send a reaction to the TV' }))
+    fireEvent.click(reactions.getByRole('button', { name: 'React 👏' }))
+    fireEvent.click(reactions.getByRole('button', { name: 'React 🔥' })) // too fast: ignored
+    await waitFor(() => expect(commands().filter((c) => c.type === 'REACT').map((c) => c.payload)).toEqual([{ emoji: '👏' }]))
+  })
+
+  it('shows tonight’s top scores in the queue tab', async () => {
+    const phone = await openRemote()
+    join()
+    act(() => phone.emit('state', {
+      nowPlaying: null, isPlaying: false, queue: [], savedSongs: [], recentSongs: [],
+      leaderboard: [
+        { id: 'a', singer: 'Jo', songTitle: 'Harana', score: 95 },
+        { id: 'b', singer: 'Mika', songTitle: 'Buwan', score: 88 },
+      ],
+    }))
+    fireEvent.click(screen.getByRole('button', { name: /Queue/ }))
+    const board = within(screen.getByRole('list', { name: 'Tonight’s top scores' }))
+    const rows = board.getAllByRole('listitem')
+    expect(rows[0].textContent).toContain('👑 Jo')
+    expect(rows[0].textContent).toContain('95')
+    expect(rows[1].textContent).toContain('Mika')
+  })
+
+  it('makes your queued song a duet', async () => {
+    await openRemote()
+    join()
+    fireEvent.click(screen.getByRole('button', { name: /Queue/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Make Harana a duet' }))
+    const save = screen.getByRole('button', { name: 'Save' })
+    expect(save.disabled).toBe(true)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Duet partner for Harana' }), { target: { value: ' Jo ' } })
+    fireEvent.click(save)
+    expect(await screen.findByText('🎤🎤 Duet with Jo')).toBeTruthy()
+    await waitFor(() => expect(commands().at(-1)).toMatchObject({ type: 'SET_DUET', payload: { entryId: 'e1', partner: 'Jo' } }))
   })
 
   it('blocks adding a song that is already queued', async () => {

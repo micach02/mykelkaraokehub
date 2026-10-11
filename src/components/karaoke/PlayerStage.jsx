@@ -4,6 +4,7 @@ import { KaraokePlayer } from './KaraokePlayer'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { RecordingBadge } from '../scoring/RecordingBadge'
+import { ReactionLayer } from './ReactionLayer'
 import { useScoring } from '../../context/ScoringContext'
 import { cx } from '../../utils/classNames'
 
@@ -47,10 +48,11 @@ export function PlayerStage({ isKaraokeMode, onBrowse }) {
       />
 
       <RecordingBadge />
+      <ReactionLayer />
 
       {!isKaraokeMode && (
         <div className="player-stage__bar">
-          <NowPlaying song={state.currentSong} requestedBy={state.currentRequestedBy} isPlaying={state.isPlaying} />
+          <NowPlaying song={state.currentSong} requestedBy={state.currentRequestedBy} duetWith={state.currentDuetWith} isPlaying={state.isPlaying} />
           <PlayerControls fullscreenTarget={stageRef} />
           {state.currentSong && (
             <button

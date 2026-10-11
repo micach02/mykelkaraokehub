@@ -82,6 +82,7 @@ export const STORAGE_KEYS = {
   remoteSungSongs: 'remote-sung-songs',
   videoLocked: 'video-locked',
   roomSettings: 'room-settings',
+  partyScores: 'party-scores',
 }
 
 // For tests.

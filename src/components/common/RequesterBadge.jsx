@@ -9,14 +9,19 @@ export function requesterName(requestedBy, { myId } = {}) {
   return requestedBy.name?.trim() || 'Guest'
 }
 
-// "🎤 Mika" pill. Never truncated, so the name is always readable.
-export function RequesterBadge({ requestedBy, myId, size = 'sm', className }) {
+// "🎤 Mika" pill ("🎤 Mika & Jo" for a duet). Never truncated, so the name
+// is always readable.
+export function RequesterBadge({ requestedBy, duetWith = null, myId, size = 'sm', className }) {
   const name = requesterName(requestedBy, { myId })
   if (!name) return null
   return (
-    <span className={cx('requester', `requester--${size}`, name === 'You' && 'requester--me', className)} title={`Requested by ${name}`}>
-      <span aria-hidden="true">🎤</span> {name}
-      <span className="sr-only"> requested this song</span>
+    <span
+      className={cx('requester', `requester--${size}`, name === 'You' && 'requester--me', className)}
+      title={duetWith ? `Requested by ${name}, a duet with ${duetWith}` : `Requested by ${name}`}
+    >
+      <span aria-hidden="true">{duetWith ? '🎤🎤' : '🎤'}</span> {name}
+      {duetWith && <> &amp; {duetWith}</>}
+      <span className="sr-only"> requested this song{duetWith ? ` (a duet with ${duetWith})` : ''}</span>
     </span>
   )
 }

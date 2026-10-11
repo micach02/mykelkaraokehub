@@ -13,7 +13,7 @@ import { cx } from '../../utils/classNames'
 // variant: 'sidebar' | 'page' | 'sheet'
 export function Queue({ variant = 'sidebar', onBrowse }) {
   const { queue, currentSong, playQueueItem, removeFromQueue, reorderQueue, moveEntry, skipSong, clearQueue } = useQueue()
-  const { isPlaying, currentRequestedBy } = useKaraokeState()
+  const { isPlaying, currentRequestedBy, currentDuetWith } = useKaraokeState()
   const [confirmClear, setConfirmClear] = useState(false)
   const [dragIndex, setDragIndex] = useState(null)
   const [overIndex, setOverIndex] = useState(null)
@@ -51,7 +51,7 @@ export function Queue({ variant = 'sidebar', onBrowse }) {
             <div className="queue-now__text">
               <p className="queue-now__title">🎤 {currentSong.title}</p>
               <p className="queue-now__artist">{currentSong.artist}</p>
-              <RequesterBadge requestedBy={currentRequestedBy} />
+              <RequesterBadge requestedBy={currentRequestedBy} duetWith={currentDuetWith} />
             </div>
             <Button size="sm" iconOnly icon="⏭" aria-label={`Skip ${currentSong.title}`} onClick={skipSong} />
           </div>

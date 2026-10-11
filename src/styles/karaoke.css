@@ -83,6 +83,59 @@
   right: var(--skip-zone-width);
 }
 
+/* Reactions from phones float up over the right side of the video. */
+.reaction-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.reaction {
+  position: absolute;
+  bottom: 8%;
+  right: calc(4% + var(--lane) * 22%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: reaction-float 3.2s ease-out forwards;
+}
+
+.reaction__emoji {
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+.reaction__name {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(8, 7, 18, 0.65);
+  color: #fff;
+  font-size: clamp(0.7rem, 1vw, 0.95rem);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@keyframes reaction-float {
+  0% { opacity: 0; transform: translateY(20px) scale(0.6); }
+  12% { opacity: 1; transform: translateY(0) scale(1.1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-55vh) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction {
+    animation: reaction-fade 3.2s linear forwards;
+  }
+
+  @keyframes reaction-fade {
+    0%, 85% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
 .karaoke-player__video--hidden {
   visibility: hidden;
 }

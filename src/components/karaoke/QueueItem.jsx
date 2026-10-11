@@ -86,7 +86,7 @@ export const QueueItem = memo(function QueueItem({
         <span className="queue-item__title">{song.title}</span>
         <span className="queue-item__meta">
           <span className="queue-item__artist">{song.artist}</span>
-          <RequesterBadge requestedBy={entry.requestedBy} className="queue-item__requester" />
+          <RequesterBadge requestedBy={entry.requestedBy} duetWith={entry.duetWith} className="queue-item__requester" />
         </span>
       </button>
       <div className="queue-item__actions">

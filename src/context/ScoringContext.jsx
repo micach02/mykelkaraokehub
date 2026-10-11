@@ -6,6 +6,8 @@ import { createAudioAnalyzer, getMicrophonePermissionState, getScoringSupport } 
 import { createScoringSession } from '../services/scoring/scoringSession'
 import { getReferenceMelody } from '../services/scoring/referenceMelodyService'
 import { recordPerformance } from '../services/scoringHistoryService'
+import { recordPartyScore } from '../services/leaderboardService'
+import { requesterName } from '../components/common/RequesterBadge'
 import { getItem, setItem, STORAGE_KEYS } from '../services/storageService'
 import { SCORING_SESSION } from '../config/scoringConfig'
 
@@ -267,10 +269,22 @@ export function ScoringProvider({ children }) {
       grade: result.grade,
       mode: result.mode,
     })
+    // Tonight's leaderboard, under the singer's name (from their phone, or
+    // "TV" for songs picked on the TV; duets as "Mika & Jo").
+    const { currentRequestedBy, currentDuetWith } = karaokeRef.current
+    const singer = requesterName(currentRequestedBy) ?? 'TV'
+    const party = recordPartyScore({
+      singer: currentDuetWith ? `${singer} & ${currentDuetWith}` : singer,
+      songTitle: song.title,
+      score: result.totalScore,
+      grade: result.gradeInfo.label,
+      emoji: result.gradeInfo.emoji,
+    })
     setResults({
       result,
       song,
       personalBest,
+      party,
       recordingUrl: recording ? URL.createObjectURL(recording) : null,
     })
     setPhase('results')

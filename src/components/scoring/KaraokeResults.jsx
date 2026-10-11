@@ -50,7 +50,7 @@ export function KaraokeResults() {
     : Math.min(SCORING_SESSION.resultsAutoNextSeconds, Math.max(0, Math.ceil((autoNextAt - now) / 1000)))
 
   if (!open) return <Modal open={false} onClose={dismissResults} title="Results" />
-  const { result, song, personalBest, recordingUrl } = results
+  const { result, song, personalBest, party, recordingUrl } = results
   const grade = result.gradeInfo
 
   return (
@@ -66,6 +66,11 @@ export function KaraokeResults() {
           </p>
           <p className="results__grade">{grade.label}</p>
           <PersonalBest score={result.totalScore} personalBest={personalBest} />
+          {party && party.total > 1 && (
+            <p className={party.rank === 1 ? 'party-rank party-rank--top' : 'party-rank'}>
+              {party.rank === 1 ? '👑 Top score tonight!' : `🏆 #${party.rank} of ${party.total} tonight`}
+            </p>
+          )}
         </div>
 
         <PerformanceStats result={result} />

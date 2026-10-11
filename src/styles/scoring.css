@@ -372,6 +372,81 @@
   letter-spacing: 0.16em;
 }
 
+/* "🏆 #2 of 7 tonight" on the score screen */
+.party-rank {
+  margin-top: 6px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.party-rank--top {
+  color: #ffe27a;
+}
+
+/* Tonight's top scores (Home and phones) */
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leaderboard__row {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+}
+
+.leaderboard__row + .leaderboard__row {
+  border-top: 1px solid var(--border);
+}
+
+.leaderboard__row--top {
+  border-radius: var(--radius-sm);
+  background: rgba(252, 209, 22, 0.08);
+}
+
+.leaderboard__rank {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.leaderboard__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.leaderboard__singer {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.leaderboard__song {
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.leaderboard__score {
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .personal-best {
   margin-top: 6px;
   color: var(--text-muted);

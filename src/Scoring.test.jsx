@@ -10,6 +10,7 @@ import { __reloadRecentSongsForTests } from './services/historyService'
 import { __reloadScoreHistoryForTests, getPersonalBest } from './services/scoringHistoryService'
 import { setItem, STORAGE_KEYS } from './services/storageService'
 import { updateRoomSettings } from './services/roomSettings'
+import { __reloadLeaderboardForTests, getLeaderboard } from './services/leaderboardService'
 import { __resetServerStatusForTests } from './hooks/useServerStatus'
 
 vi.mock('./services/player/youtubeAdapter', () => import('./test/fakePlayer'))
@@ -34,6 +35,7 @@ beforeEach(() => {
   __reloadLibraryForTests()
   __reloadRecentSongsForTests()
   __reloadScoreHistoryForTests()
+  __reloadLeaderboardForTests()
   __resetServerStatusForTests()
   fakePlayers.current = null
   fakePlayers.loaded = []
@@ -129,6 +131,9 @@ describe('karaoke scoring', () => {
     expect(firstMic.closed).toBe(true) // microphone released
     expect(fakePlayers.current.song.id).toBe(SONGS.buwan.id)
     expect(getPersonalBest(SONGS.buwan.id).score).toBeGreaterThan(80)
+    // On tonight's leaderboard (picked on the TV, so the singer is "TV").
+    expect(getLeaderboard()[0]).toMatchObject({ singer: 'TV', songTitle: 'Buwan' })
+    expect(within(results).queryByText(/tonight/)).toBeNull() // only one score so far: no rank yet
 
     // Next song: mic allowed and checked → recording starts right away.
     fakePlayers.current.time = 0

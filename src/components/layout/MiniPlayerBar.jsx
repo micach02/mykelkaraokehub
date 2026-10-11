@@ -5,7 +5,7 @@ import { RequesterBadge } from '../common/RequesterBadge'
 
 // Mobile "now playing" strip above the bottom nav. Tapping it opens the queue.
 export function MiniPlayerBar({ onOpenQueue }) {
-  const { currentSong, currentRequestedBy, queue, isPlaying } = useKaraokeState()
+  const { currentSong, currentRequestedBy, currentDuetWith, queue, isPlaying } = useKaraokeState()
   const actions = useKaraokeActions()
   if (!currentSong && queue.length === 0) return null
 
@@ -20,7 +20,7 @@ export function MiniPlayerBar({ onOpenQueue }) {
             {nextSong ? `Up next: ${nextSong.title}` : currentSong?.artist ?? ''}
           </span>
         </span>
-        {currentSong && <RequesterBadge requestedBy={currentRequestedBy} />}
+        {currentSong && <RequesterBadge requestedBy={currentRequestedBy} duetWith={currentDuetWith} />}
       </button>
       {currentSong && (
         <Button

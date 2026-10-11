@@ -17,6 +17,9 @@ import {
 } from '../services/roomService'
 import { ROOM_CONFIG } from '../config/appConfig'
 import { canPhoneControl, canPhoneGoNext, getRoomSettings, useRoomSettings } from '../services/roomSettings'
+import { showReaction } from '../services/reactionBus'
+import { getLeaderboard, usePartyScores } from '../services/leaderboardService'
+import { REACTIONS } from '../utils/reactions'
 
 const RoomContext = createContext(null)
 const MAX_SAVED_SONGS_SHARED = 100
@@ -41,13 +44,14 @@ function buildResults(scoring) {
 function buildSnapshot(karaoke, library, recent) {
   return {
     nowPlaying: karaoke.currentSong
-      ? { song: toRemoteSong(karaoke.currentSong), requestedBy: karaoke.currentRequestedBy ?? null }
+      ? { song: toRemoteSong(karaoke.currentSong), requestedBy: karaoke.currentRequestedBy ?? null, duetWith: karaoke.currentDuetWith ?? null }
       : null,
     isPlaying: karaoke.isPlaying,
     queue: karaoke.queue.map((entry) => ({
       entryId: entry.entryId,
       song: toRemoteSong(entry.song),
       requestedBy: entry.requestedBy ?? null,
+      duetWith: entry.duetWith ?? null,
     })),
     savedSongs: library.slice(0, MAX_SAVED_SONGS_SHARED).map(toRemoteSong),
     recentSongs: recent.slice(0, MAX_RECENT_SONGS_SHARED).map(toRemoteSong),
@@ -157,6 +161,16 @@ export function RoomHostProvider({ children }) {
         if (entry && entry.requestedBy?.id === from?.id) actions.removeFromQueue(entry.entryId)
         break
       }
+      case COMMANDS.REACT:
+        if (current.currentSong && REACTIONS.includes(payload.emoji)) showReaction({ emoji: payload.emoji, name: who, senderId: from?.id })
+        break
+      case COMMANDS.SET_DUET: {
+        // Phones may set a duet partner only on their own songs.
+        const isCurrent = payload.entryId === current.currentEntryId
+        const owner = isCurrent ? current.currentRequestedBy : current.queue.find((e) => e.entryId === payload.entryId)?.requestedBy
+        if (owner && owner.id === from?.id) actions.setDuet(payload.entryId, payload.partner)
+        break
+      }
       case COMMANDS.SKIP_SONG: {
         const settings = getRoomSettings()
         // On the score screen, ⏭ on a phone is the screen's Next Song button
@@ -221,7 +235,15 @@ export function RoomHostProvider({ children }) {
   // ---- Publish the queue to phones ----
   const results = useMemo(() => buildResults(scoring), [scoring])
   const [settings] = useRoomSettings()
-  const snapshot = useMemo(() => ({ ...buildSnapshot(karaoke, library, recent), results, settings }), [karaoke, library, recent, results, settings])
+  const partyScores = usePartyScores()
+  const leaderboard = useMemo(
+    () => getLeaderboard(5).map(({ id, singer, songTitle, score }) => ({ id, singer, songTitle, score })),
+    [partyScores],
+  )
+  const snapshot = useMemo(
+    () => ({ ...buildSnapshot(karaoke, library, recent), results, settings, leaderboard }),
+    [karaoke, library, recent, results, settings, leaderboard],
+  )
   const snapshotKey = JSON.stringify(snapshot)
   useEffect(() => {
     if (!room || status !== 'live') return undefined

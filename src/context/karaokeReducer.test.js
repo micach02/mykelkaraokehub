@@ -20,6 +20,45 @@ const add = (s, entryId, extra = {}) => ({ type: ActionTypes.ADD_TO_QUEUE, paylo
 const play = (s, entryId) => ({ type: ActionTypes.PLAY_SONG, payload: { song: s, entryId } })
 const titles = (state) => state.queue.map((e) => e.song.title)
 
+describe('duets', () => {
+  const mika = { id: 'phone-mika', name: 'Mika' }
+  it('sets a duet partner on a queued song, and it carries over when the song starts', () => {
+    const duet = (entryId, partner) => ({ type: ActionTypes.SET_DUET, payload: { entryId, partner } })
+    let state = run([play(buwan, 'p0'), add(harana, 'e1', { requestedBy: mika }), duet('e1', '  Jo ')])
+    expect(state.queue[0].duetWith).toBe('Jo')
+    state = run([{ type: ActionTypes.SKIP_SONG }], state)
+    expect(state.currentDuetWith).toBe('Jo')
+    expect(run([duet('e1', '')], state).currentDuetWith).toBeNull() // removed
+    expect(sanitizePersistedSession(toPersistedSession(state)).currentDuetWith).toBe('Jo')
+  })
+})
+
+describe('take turns (fair queue)', () => {
+  const mika = { id: 'phone-mika', name: 'Mika' }
+  const jo = { id: 'phone-jo', name: 'Jo' }
+  const ana = { id: 'phone-ana', name: 'Ana' }
+  const s = (n) => song(`opm-1${String(n).padStart(2, '0')}`, `Song ${n}`)
+  const turn = (n, who) => add(s(n), `e${n}`, { requestedBy: who, takeTurns: true })
+  const singers = (state) => state.queue.map((e) => e.requestedBy?.name ?? 'TV')
+
+  it('alternates singers instead of first come, first served', () => {
+    // Mika queues three songs first, then Jo and Ana join.
+    const state = run([play(buwan, 'p0'), turn(1, mika), turn(2, mika), turn(3, mika), turn(4, jo), turn(5, ana), turn(6, jo)])
+    expect(singers(state)).toEqual(['Mika', 'Jo', 'Ana', 'Mika', 'Jo', 'Mika'])
+  })
+
+  it('someone singing now waits a round; the TV counts as one singer', () => {
+    const singing = run([{ type: ActionTypes.PLAY_SONG, payload: { song: buwan, entryId: 'p0', requestedBy: mika } }])
+    const state = run([turn(1, mika), turn(2, jo), turn(3, null)], singing)
+    expect(singers(state)).toEqual(['Jo', 'TV', 'Mika'])
+  })
+
+  it('off: first come, first served', () => {
+    const state = run([play(buwan, 'p0'), add(s(1), 'e1', { requestedBy: mika }), add(s(2), 'e2', { requestedBy: mika }), add(s(3), 'e3', { requestedBy: jo })])
+    expect(singers(state)).toEqual(['Mika', 'Mika', 'Jo'])
+  })
+})
+
 describe('karaokeReducer', () => {
   it('Play Now makes the song current and keeps the queue', () => {
     const state = run([add(kathangIsip, 'e1'), add(harana, 'e2'), play(buwan, 'p1')])
@@ -142,6 +181,7 @@ describe('karaokeReducer', () => {
     expect(sanitizePersistedSession({ queue: [{ entryId: 1 }, { entryId: 'ok', song: buwan }, { entryId: 'old', song: placeholder }], currentSong: placeholder })).toEqual({
       currentSong: null,
       currentRequestedBy: null,
+      currentDuetWith: null,
       queue: [{ entryId: 'ok', song: buwan }],
       volume: null,
       isMuted: false,

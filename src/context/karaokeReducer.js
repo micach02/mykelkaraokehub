@@ -18,6 +18,7 @@ export const ActionTypes = {
   SET_FULLSCREEN: 'SET_FULLSCREEN',
   SET_PLAYBACK_STATUS: 'SET_PLAYBACK_STATUS',
   RESTORE_SESSION: 'RESTORE_SESSION',
+  SET_DUET: 'SET_DUET',
 }
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/
@@ -29,7 +30,7 @@ export const initialState = {
   currentEntryId: null,
   // false when the song was restored after a refresh: cue it, don't blast it.
   autoplay: true,
-  // [{ entryId, song, addedAt, requestedBy }]
+  // [{ entryId, song, addedAt, requestedBy, duetWith }]
   queue: [],
   isPlaying: false,
   // 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'buffering' | 'stopped' | 'ended' | 'error'
@@ -41,6 +42,8 @@ export const initialState = {
   lastPlayedSong: null,
   // Who asked for the current song (from a phone remote), or null.
   currentRequestedBy: null,
+  // Duet partner's name for the current song, or null.
+  currentDuetWith: null,
 }
 
 export function createQueueEntry(song, entryId, { requestedBy = null, addedAt = Date.now() } = {}) {
@@ -72,12 +75,37 @@ export function canAddToQueue(state, song, { allowDuplicates = false } = {}) {
   return { ok: true }
 }
 
+// "Take turns": where a new song goes so singers alternate. Each queued song
+// has a round per singer (their 1st song is round 1, 2nd is round 2…; a
+// singer who is singing now starts one round later). The new song goes after
+// the last song of the same or an earlier round. Songs picked on the TV count
+// as one singer.
+export function turnPosition(state, requestedBy) {
+  const singer = (who) => who?.id ?? 'tv'
+  const current = state.currentSong ? singer(state.currentRequestedBy) : null
+  const rounds = new Map()
+  const roundOf = (who) => {
+    const key = singer(who)
+    const round = (rounds.get(key) ?? (key === current ? 1 : 0)) + 1
+    rounds.set(key, round)
+    return round
+  }
+  const queueRounds = state.queue.map((entry) => roundOf(entry.requestedBy))
+  const newRound = roundOf(requestedBy)
+  let position = 0
+  queueRounds.forEach((round, index) => {
+    if (round <= newRound) position = index + 1
+  })
+  return position
+}
+
 // ---- Helpers ----
 
-function startSong(state, song, entryId, { autoplay = true, requestedBy = null } = {}) {
+function startSong(state, song, entryId, { autoplay = true, requestedBy = null, duetWith = null } = {}) {
   return {
     ...state,
     currentRequestedBy: requestedBy,
+    currentDuetWith: duetWith || null,
     currentSong: song,
     currentEntryId: entryId,
     autoplay,
@@ -95,12 +123,13 @@ function advance(state) {
       currentSong: null,
       currentEntryId: null,
       currentRequestedBy: null,
+      currentDuetWith: null,
       isPlaying: false,
       playbackStatus: 'idle',
       lastPlayedSong: state.currentSong ?? state.lastPlayedSong,
     }
   }
-  return { ...startSong(state, next.song, next.entryId, { requestedBy: next.requestedBy }), queue: rest }
+  return { ...startSong(state, next.song, next.entryId, { requestedBy: next.requestedBy, duetWith: next.duetWith }), queue: rest }
 }
 
 function clampVolume(value) {
@@ -126,16 +155,20 @@ export function karaokeReducer(state, action) {
       const entry = state.queue.find((e) => e.entryId === action.payload.entryId)
       if (!entry) return state
       return {
-        ...startSong(state, entry.song, entry.entryId, { requestedBy: entry.requestedBy }),
+        ...startSong(state, entry.song, entry.entryId, { requestedBy: entry.requestedBy, duetWith: entry.duetWith }),
         queue: state.queue.filter((e) => e.entryId !== entry.entryId),
       }
     }
 
     case ActionTypes.ADD_TO_QUEUE: {
-      const { song, entryId, allowDuplicates = false, autoStart = false, requestedBy = null, addedAt } = action.payload
+      const { song, entryId, allowDuplicates = false, autoStart = false, requestedBy = null, addedAt, takeTurns = false } = action.payload
       if (!canAddToQueue(state, song, { allowDuplicates }).ok) return state
       if (autoStart && !state.currentSong) return startSong(state, song, entryId, { requestedBy })
-      return { ...state, queue: [...state.queue, createQueueEntry(song, entryId, { requestedBy, addedAt })] }
+      const entry = createQueueEntry(song, entryId, { requestedBy, addedAt })
+      if (!takeTurns) return { ...state, queue: [...state.queue, entry] }
+      const queue = [...state.queue]
+      queue.splice(turnPosition(state, requestedBy), 0, entry)
+      return { ...state, queue }
     }
 
     case ActionTypes.REMOVE_FROM_QUEUE:
@@ -174,6 +207,15 @@ export function karaokeReducer(state, action) {
     case ActionTypes.SET_FULLSCREEN:
       return { ...state, isFullscreen: Boolean(action.payload.value) }
 
+    // Duet partner for a queued song or the current one ('' removes it).
+    case ActionTypes.SET_DUET: {
+      const { entryId, partner } = action.payload
+      const duetWith = String(partner ?? '').trim().slice(0, 40) || null
+      if (entryId === state.currentEntryId) return { ...state, currentDuetWith: duetWith }
+      if (!state.queue.some((e) => e.entryId === entryId)) return state
+      return { ...state, queue: state.queue.map((e) => (e.entryId === entryId ? { ...e, duetWith } : e)) }
+    }
+
     case ActionTypes.SET_PLAYBACK_STATUS: {
       const { status, entryId } = action.payload
       if (entryId && entryId !== state.currentEntryId) return state
@@ -181,14 +223,16 @@ export function karaokeReducer(state, action) {
     }
 
     case ActionTypes.RESTORE_SESSION: {
-      const { currentSong, currentRequestedBy = null, queue, volume, isMuted, entryId } = action.payload
+      const { currentSong, currentRequestedBy = null, currentDuetWith = null, queue, volume, isMuted, entryId } = action.payload
       const restored = {
         ...state,
         queue: Array.isArray(queue) ? queue : state.queue,
         volume: volume == null ? state.volume : clampVolume(volume),
         isMuted: Boolean(isMuted),
       }
-      return currentSong ? startSong(restored, currentSong, entryId, { autoplay: false, requestedBy: currentRequestedBy }) : restored
+      return currentSong
+        ? startSong(restored, currentSong, entryId, { autoplay: false, requestedBy: currentRequestedBy, duetWith: currentDuetWith })
+        : restored
     }
 
     default:
@@ -201,6 +245,7 @@ export function toPersistedSession(state) {
   return {
     currentSong: state.currentSong,
     currentRequestedBy: state.currentRequestedBy ?? null,
+    currentDuetWith: state.currentDuetWith ?? null,
     queue: state.queue,
     volume: state.volume,
     isMuted: state.isMuted,
@@ -220,6 +265,7 @@ export function sanitizePersistedSession(raw) {
   return {
     currentSong: isSong(raw.currentSong) ? raw.currentSong : null,
     currentRequestedBy: isRequester(raw.currentRequestedBy) ? raw.currentRequestedBy : null,
+    currentDuetWith: typeof raw.currentDuetWith === 'string' ? raw.currentDuetWith.slice(0, 40) : null,
     queue,
     volume: typeof raw.volume === 'number' ? raw.volume : null,
     isMuted: Boolean(raw.isMuted),

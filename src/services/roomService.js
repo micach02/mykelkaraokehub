@@ -12,6 +12,8 @@ export const COMMANDS = {
   REMOVE_FROM_QUEUE: 'REMOVE_FROM_QUEUE',
   SKIP_SONG: 'SKIP_SONG',
   TOGGLE_PLAY: 'TOGGLE_PLAY',
+  SET_DUET: 'SET_DUET',
+  REACT: 'REACT',
 }
 
 const roomPath = (code) => `/api/rooms/${encodeURIComponent(code)}`

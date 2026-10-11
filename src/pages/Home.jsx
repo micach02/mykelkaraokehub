@@ -20,6 +20,8 @@ import { getFeaturedArtists } from '../utils/artistLookup'
 import { getSuggestions } from '../utils/suggestions'
 import { vibes } from '../data/vibes'
 import { practiceSongs } from '../data/practiceSongs'
+import { Leaderboard } from '../components/scoring/Leaderboard'
+import { clearLeaderboard, getLeaderboard, usePartyScores } from '../services/leaderboardService'
 import { BRAND, SEARCH_CONFIG } from '../config/appConfig'
 import { pluralize } from '../utils/text'
 
@@ -58,6 +60,8 @@ export default function Home() {
   const narrow = useMediaQuery('(max-width: 560px)')
   const { categories } = useCategories()
   const recentSearches = useRecentSearches()
+  const partyScores = usePartyScores()
+  const topScores = useMemo(() => getLeaderboard(10), [partyScores])
   useDocumentTitle(isSearching ? `“${trimmed}”` : null)
 
   // Typing: live search (debounced). Enter / a chip: a full search, right away.
@@ -130,6 +134,18 @@ export default function Home() {
             <SectionHeader id="for-you-title" eyebrow="✨ For you" title="Suggested for you" />
             <QuickSearchChips items={suggestions} onSelect={submitQuery} label="Suggestions" variant="glow" />
           </section>
+
+          {topScores.length > 0 && (
+            <section className="section" aria-labelledby="leaderboard-title">
+              <SectionHeader
+                id="leaderboard-title"
+                eyebrow="🏆 Tonight"
+                title="Top scores"
+                action={<Button size="sm" variant="ghost" onClick={clearLeaderboard}>Clear</Button>}
+              />
+              <Leaderboard entries={topScores} />
+            </section>
+          )}
 
           <section className="section" aria-labelledby="practice-title">
             <SectionHeader id="practice-title" eyebrow="🎯 Karaoke Score" title="Sing for a score" />

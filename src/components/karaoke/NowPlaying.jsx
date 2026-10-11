@@ -4,7 +4,7 @@ import { RequesterBadge } from '../common/RequesterBadge'
 
 // size: 'sm' (player bar) | 'xl' (Karaoke Mode on a TV)
 // requestedBy / nextRequestedBy: who asked for the song from a phone, if anyone.
-export function NowPlaying({ song, nextSong, requestedBy = null, nextRequestedBy = null, size = 'sm', isPlaying = false }) {
+export function NowPlaying({ song, nextSong, requestedBy = null, duetWith = null, nextRequestedBy = null, nextDuetWith = null, size = 'sm', isPlaying = false }) {
   const badgeSize = size === 'xl' ? 'lg' : 'sm'
   if (!song) {
     return (
@@ -22,7 +22,7 @@ export function NowPlaying({ song, nextSong, requestedBy = null, nextRequestedBy
         <span className={cx('eyebrow', isPlaying && 'eyebrow--live')}>{isPlaying ? '● Now playing' : 'Now playing'}</span>
         <p className="now-playing__title">{song.title}</p>
         <p className="now-playing__artist">{song.artist}</p>
-        <RequesterBadge requestedBy={requestedBy} size={badgeSize} className="now-playing__requester" />
+        <RequesterBadge requestedBy={requestedBy} duetWith={duetWith} size={badgeSize} className="now-playing__requester" />
         {nextSong !== undefined && (
           <p className="now-playing__next">
             {nextSong ? (
@@ -30,7 +30,7 @@ export function NowPlaying({ song, nextSong, requestedBy = null, nextRequestedBy
                 <span className="now-playing__next-text">
                   Up next: <strong>{nextSong.title}</strong> · {nextSong.artist}
                 </span>
-                <RequesterBadge requestedBy={nextRequestedBy} size={badgeSize} className="now-playing__next-requester" />
+                <RequesterBadge requestedBy={nextRequestedBy} duetWith={nextDuetWith} size={badgeSize} className="now-playing__next-requester" />
               </>
             ) : (
               'Up next: nothing queued yet'

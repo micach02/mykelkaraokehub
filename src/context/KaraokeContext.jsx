@@ -10,6 +10,7 @@ import {
 import { getItem, setItem, STORAGE_KEYS } from '../services/storageService'
 import { recordSong } from '../services/historyService'
 import { QUEUE_CONFIG, PLAYER_CONFIG } from '../config/appConfig'
+import { getRoomSettings } from '../services/roomSettings'
 import { createId } from '../utils/id'
 import { enterFullscreen, exitFullscreen, getFullscreenElement } from '../utils/fullscreen'
 
@@ -38,10 +39,10 @@ export function KaraokeProvider({ children }) {
   }, [state])
 
   // Persist the queue and current song (localStorage, via storageService).
-  const { currentSong, currentRequestedBy, queue, volume, isMuted } = state
+  const { currentSong, currentRequestedBy, currentDuetWith, queue, volume, isMuted } = state
   useEffect(() => {
-    setItem(STORAGE_KEYS.session, toPersistedSession({ currentSong, currentRequestedBy, queue, volume, isMuted }))
-  }, [currentSong, currentRequestedBy, queue, volume, isMuted])
+    setItem(STORAGE_KEYS.session, toPersistedSession({ currentSong, currentRequestedBy, currentDuetWith, queue, volume, isMuted }))
+  }, [currentSong, currentRequestedBy, currentDuetWith, queue, volume, isMuted])
 
   useEffect(() => {
     const onChange = () => dispatch({ type: ActionTypes.SET_FULLSCREEN, payload: { value: Boolean(getFullscreenElement()) } })
@@ -82,12 +83,18 @@ export function KaraokeProvider({ children }) {
           allowDuplicates: QUEUE_CONFIG.allowDuplicates,
           autoStart: QUEUE_CONFIG.autoStartWhenIdle,
           requestedBy,
+          // Host setting: queue so singers alternate (see turnPosition).
+          takeTurns: getRoomSettings().takeTurns,
         },
       })
       return { ok: true, started }
     },
     removeFromQueue(entryId) {
       dispatch({ type: ActionTypes.REMOVE_FROM_QUEUE, payload: { entryId } })
+    },
+    // Duet partner's name for a queued or the current song ('' removes it).
+    setDuet(entryId, partner) {
+      dispatch({ type: ActionTypes.SET_DUET, payload: { entryId, partner } })
     },
     reorderQueue(fromIndex, toIndex) {
       dispatch({ type: ActionTypes.REORDER_QUEUE, payload: { fromIndex, toIndex } })

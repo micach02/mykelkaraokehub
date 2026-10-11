@@ -118,4 +118,17 @@ describe('command validation', () => {
     expect(sanitizeCommand({ type: 'SKIP_SONG' })).toBeNull()
     expect(sanitizeCommand({ type: 'ADD_TO_QUEUE', payload: {}, from })).toBeNull()
   })
+
+  it('accepts duet partners and known reactions only', () => {
+    expect(sanitizeCommand({ type: 'SET_DUET', payload: { entryId: 'e1', partner: '  Jo  ', extra: 1 }, from }).payload).toEqual({ entryId: 'e1', partner: 'Jo' })
+    expect(sanitizeCommand({ type: 'SET_DUET', payload: { partner: 'Jo' }, from })).toBeNull()
+    expect(sanitizeCommand({ type: 'REACT', payload: { emoji: '👏' }, from }).payload).toEqual({ emoji: '👏' })
+    expect(sanitizeCommand({ type: 'REACT', payload: { emoji: '<b>spam</b>' }, from })).toBeNull()
+  })
+
+  it('keeps a song length only when it looks real', () => {
+    expect(sanitizeSong({ ...song, duration: 241.6 }).duration).toBe(242)
+    expect(sanitizeSong({ ...song, duration: -5 }).duration).toBeNull()
+    expect(sanitizeSong({ ...song, duration: 'long' }).duration).toBeNull()
+  })
 })

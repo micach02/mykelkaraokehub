@@ -21,7 +21,7 @@ function UpNext({ queue }) {
             <li key={entry.entryId} className="karaoke-next__item">
               <span className="karaoke-next__index" aria-hidden="true">{index + 1}</span>
               <span className="karaoke-next__title">{entry.song.title}</span>
-              <RequesterBadge requestedBy={entry.requestedBy} className="karaoke-next__requester" />
+              <RequesterBadge requestedBy={entry.requestedBy} duetWith={entry.duetWith} className="karaoke-next__requester" />
             </li>
           ))}
           {queue.length > UP_NEXT_SHOWN && (
@@ -39,11 +39,11 @@ function UpNext({ queue }) {
 //   now playing │ playback controls │ QR code
 //   up next     │                   │ Add Songs · Queue · Exit
 export function KaraokeMode({ onOpenQueue, onOpenPicker, fullscreenTarget }) {
-  const { currentSong, currentRequestedBy, queue, isPlaying } = useKaraokeState()
+  const { currentSong, currentRequestedBy, currentDuetWith, queue, isPlaying } = useKaraokeState()
 
   return (
     <div className="karaoke-mode">
-      <NowPlaying song={currentSong} requestedBy={currentRequestedBy} isPlaying={isPlaying} size="xl" />
+      <NowPlaying song={currentSong} requestedBy={currentRequestedBy} duetWith={currentDuetWith} isPlaying={isPlaying} size="xl" />
       <PlayerControls size="xl" fullscreenTarget={fullscreenTarget} />
       <div className="karaoke-mode__room">
         <RoomQrCard />

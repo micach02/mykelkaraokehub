@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getThumbnailUrl } from '../../services/youtubeService'
 import { RequesterBadge } from '../common/RequesterBadge'
+import { REACTIONS } from '../../utils/reactions'
 
 // Seconds left of the TV's "next song" countdown. The TV sends how many
 // seconds were left when it published; this counts down on the phone's clock.
@@ -36,7 +37,7 @@ function RemoteResults({ results, receivedAt, next, myId, onNext, disabled, canN
             <span className="remote-now__next-text">
               Up next: {next.song.title}{secondsLeft != null ? ` · starts in ${secondsLeft}s` : ''}
             </span>
-            <RequesterBadge requestedBy={next.requestedBy} myId={myId} />
+            <RequesterBadge requestedBy={next.requestedBy} duetWith={next.duetWith} myId={myId} />
           </p>
         ) : (
           <p className="remote-now__next">The queue is empty. Add a song!</p>
@@ -60,7 +61,7 @@ function RemoteResults({ results, receivedAt, next, myId, onNext, disabled, canN
 
 // canControl: may this phone pause/skip the song now playing? (Its own song,
 // or any song when the host allows it.)
-export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, receivedAt, onTogglePlay, onSkip, disabled, canControl = true, canNext = true }) {
+export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, receivedAt, onTogglePlay, onSkip, onReact, disabled, canControl = true, canNext = true }) {
   if (results) {
     return <RemoteResults results={results} receivedAt={receivedAt} next={next} myId={myId} onNext={onSkip} disabled={disabled} canNext={canNext} />
   }
@@ -81,11 +82,11 @@ export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, r
         <span className="remote-now__eyebrow">{isPlaying ? '● Now playing' : 'Now playing'}</span>
         <p className="remote-now__title">{song.title}</p>
         <p className="remote-now__artist">{song.artist}</p>
-        <RequesterBadge requestedBy={requestedBy} myId={myId} />
+        <RequesterBadge requestedBy={requestedBy} duetWith={nowPlaying.duetWith} myId={myId} />
         {next && (
           <p className="remote-now__next">
             <span className="remote-now__next-text">Up next: {next.song.title}</span>
-            <RequesterBadge requestedBy={next.requestedBy} myId={myId} />
+            <RequesterBadge requestedBy={next.requestedBy} duetWith={next.duetWith} myId={myId} />
           </p>
         )}
       </div>
@@ -98,6 +99,15 @@ export function RemoteNowPlaying({ nowPlaying, isPlaying, next, myId, results, r
         </button>
       </div>
       {!canControl && <p className="remote-now__hint">Only the singer can pause or skip this song.</p>}
+      {onReact && (
+        <div className="remote-reactions" role="group" aria-label="Send a reaction to the TV">
+          {REACTIONS.map((emoji) => (
+            <button key={emoji} type="button" className="remote-reaction" onClick={() => onReact(emoji)} disabled={disabled} aria-label={`React ${emoji}`}>
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
