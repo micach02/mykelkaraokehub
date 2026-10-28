@@ -76,6 +76,8 @@ describe('Phone Remote — TV side', () => {
     expect(queuePanel.getByTitle('Requested by Mika')).toBeTruthy()
     // The player's Now Playing bar shows the requester too.
     expect(within(screen.getByRole('region', { name: 'Karaoke player' })).getByTitle('Requested by Mika')).toBeTruthy()
+    // …and greets the singer on the video for a few seconds.
+    expect(within(screen.getByRole('region', { name: 'Karaoke player' })).getByText('Mika, you’re up!')).toBeTruthy()
 
     act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.harana }, from: mika }))
     expect(await queuePanel.findByText('Harana')).toBeTruthy()

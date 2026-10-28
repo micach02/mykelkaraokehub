@@ -292,4 +292,20 @@ describe('myKelKaraokeHub (TV)', () => {
     await waitFor(() => expect(upNext().getByText('Kathang Isip')).toBeTruthy())
     expect(upNext().getAllByRole('listitem')).toHaveLength(1)
   })
+
+  it('Karaoke Mode with nothing playing is a party lobby; 🎲 Surprise me picks one of your songs', async () => {
+    // Sung before, so Surprise me has something to pick (no search needed).
+    window.localStorage.setItem('mykelkaraokehub:v1:recent-songs', JSON.stringify([SONGS.harana]))
+    __reloadRecentSongsForTests()
+    renderApp('/karaoke')
+    const lobby = within(await screen.findByRole('region', { name: /Scan to add songs!/ }))
+    expect(lobby.getByText(/Enter your name/)).toBeTruthy()
+    // The deck below is just the buttons until a song plays.
+    expect(screen.queryByRole('region', { name: 'Up next' })).toBeNull()
+
+    fireEvent.click(lobby.getByRole('button', { name: 'Surprise me' }))
+    expect(await screen.findByText('🎲 Surprise! Now playing “Harana”')).toBeTruthy()
+    await waitFor(() => expect(fakePlayers.current.song.id).toBe(SONGS.harana.id))
+    expect(screen.queryByRole('region', { name: /Scan to add songs!/ })).toBeNull()
+  })
 })

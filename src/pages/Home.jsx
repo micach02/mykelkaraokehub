@@ -3,6 +3,7 @@ import { SearchBar } from '../components/songs/SearchBar'
 import { SongGrid } from '../components/songs/SongGrid'
 import { CategoryTiles } from '../components/songs/CategoryTiles'
 import { QuickSearchChips } from '../components/songs/QuickSearchChips'
+import { ArtistRail } from '../components/songs/ArtistRail'
 import { YouTubeResults, YouTubeSetupNotice } from '../components/songs/YouTubeResults'
 import { HomeRoomQr } from '../components/room/HomeRoomQr'
 import { Button, ButtonLink } from '../components/common/Button'
@@ -15,6 +16,8 @@ import { useRecentSongs } from '../hooks/useRecentSongs'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useSurprise } from '../hooks/useSurprise'
+import { useKaraokeState } from '../context/KaraokeContext'
 import { clearRecentSongs } from '../services/historyService'
 import { getFeaturedArtists } from '../utils/artistLookup'
 import { getSuggestions } from '../utils/suggestions'
@@ -23,6 +26,7 @@ import { practiceSongs } from '../data/practiceSongs'
 import { Leaderboard } from '../components/scoring/Leaderboard'
 import { clearLeaderboard, getLeaderboard, usePartyScores } from '../services/leaderboardService'
 import { BRAND, SEARCH_CONFIG } from '../config/appConfig'
+import { cx } from '../utils/classNames'
 import { pluralize } from '../utils/text'
 
 const FEATURED_ARTISTS = getFeaturedArtists().map((a) => a.name)
@@ -62,6 +66,11 @@ export default function Home() {
   const recentSearches = useRecentSearches()
   const partyScores = usePartyScores()
   const topScores = useMemo(() => getLeaderboard(10), [partyScores])
+  const { currentSong } = useKaraokeState()
+  const surprise = useSurprise(submitQuery)
+  // Searching, or a song is on: the big welcome steps aside so results (or
+  // the next pick) come first.
+  const compact = isSearching || Boolean(currentSong)
   useDocumentTitle(isSearching ? `“${trimmed}”` : null)
 
   // Typing: live search (debounced). Enter / a chip: a full search, right away.
@@ -70,7 +79,7 @@ export default function Home() {
 
   return (
     <div className="page page--home">
-      <section className="hero" aria-labelledby="hero-title">
+      <section className={cx('hero', compact && 'hero--compact')} aria-labelledby="hero-title">
         <p className="hero__brand">
           <span aria-hidden="true">🎤</span> {BRAND.appName}
           <span className="hero__brand-tagline">
@@ -81,7 +90,8 @@ export default function Home() {
           What do you want to <span className="gradient-text">sing tonight?</span>
         </h1>
         <p className="hero__text">Type a song, an artist, or a vibe. Karaoke versions appear as you type.</p>
-        <HomeRoomQr />
+        {compact && !isSearching && <p className="hero__next" aria-hidden="true">🎶 What’s next?</p>}
+        {!isSearching && <HomeRoomQr />}
         <SearchBar
           id={HOME_SEARCH_ID}
           size="xl"
@@ -95,7 +105,9 @@ export default function Home() {
           className="hero__search"
         />
         {!isSearching && (
-          <QuickSearchChips items={HERO_VIBES} onSelect={submitQuery} label="Vibes" variant="glow" className="hero__quick" />
+          <QuickSearchChips items={HERO_VIBES} onSelect={submitQuery} label="Vibes" variant="glow" className="hero__quick">
+            <button type="button" className="quick-chip quick-chip--surprise" onClick={surprise}>🎲 Surprise me</button>
+          </QuickSearchChips>
         )}
       </section>
 
@@ -147,13 +159,6 @@ export default function Home() {
             </section>
           )}
 
-          <section className="section" aria-labelledby="practice-title">
-            <SectionHeader id="practice-title" eyebrow="🎯 Karaoke Score" title="Sing for a score" />
-            <p className="section__subtitle section__subtitle--spaced">
-              With <strong>🎤 Auto-score</strong> on, every song you sing gets a Voice score — or try a practice track with a melody guide for a full Melody score.
-            </p>
-            <SongGrid songs={practiceSongs} layout="row" label="Practice tracks" />
-          </section>
 
           {savedSongs.length > 0 && (
             <section className="section" aria-labelledby="my-songs-title">
@@ -180,7 +185,18 @@ export default function Home() {
 
           <section className="section" aria-labelledby="artists-title">
             <SectionHeader id="artists-title" eyebrow={<><FlagPH /> OPM</>} title="OPM Artists" />
-            <QuickSearchChips items={FEATURED_ARTISTS} onSelect={submitQuery} label="OPM artists" />
+            <ArtistRail artists={FEATURED_ARTISTS} onSelect={submitQuery} label="OPM artists" />
+          </section>
+
+          <section className="section score-banner" aria-labelledby="practice-title">
+            <div className="score-banner__intro">
+              <p className="section__eyebrow">🎯 Karaoke Score</p>
+              <h2 id="practice-title" className="section__title">Sing for a score</h2>
+              <p className="section__subtitle">
+                Turn on <strong>🎤 Auto-score</strong> and every song gets a Voice score. Warm up with a practice track for a full Melody score.
+              </p>
+            </div>
+            <SongGrid songs={practiceSongs} layout="list" label="Practice tracks" />
           </section>
 
           {recentSearches.length > 0 && (

@@ -8,6 +8,9 @@ import { isFullscreenSupported } from '../../utils/fullscreen'
 import { cx } from '../../utils/classNames'
 
 // Transport controls bound to the karaoke session. size: 'md' | 'xl' (TV)
+//   progress
+//   ▶ ⏹ ⏭ ……………… 🔊 ─── ⛶
+//   Auto-score · Lock video
 export function PlayerControls({ size = 'md', fullscreenTarget }) {
   const { currentSong, isPlaying, playbackStatus, volume, isMuted, isFullscreen, queue } = useKaraokeState()
   const actions = useKaraokeActions()
@@ -36,7 +39,7 @@ export function PlayerControls({ size = 'md', fullscreenTarget }) {
       </div>
 
       <div className="player-controls__row">
-        <div className="player-controls__group">
+        <div className="player-controls__group player-controls__transport">
           <Button
             variant="primary"
             size={buttonSize}
@@ -62,8 +65,6 @@ export function PlayerControls({ size = 'md', fullscreenTarget }) {
             disabled={!hasSong}
             onClick={actions.skipSong}
           />
-          {hasSong && <AutoScoreToggle size={size} />}
-          {hasSong && currentSong.source !== 'practice' && <VideoLockToggle size={size} />}
         </div>
 
         <div className="player-controls__group player-controls__volume">
@@ -99,6 +100,13 @@ export function PlayerControls({ size = 'md', fullscreenTarget }) {
             />
           )}
         </div>
+
+        {hasSong && (
+          <div className="player-controls__group player-controls__options">
+            <AutoScoreToggle size={size} />
+            {currentSong.source !== 'practice' && <VideoLockToggle size={size} />}
+          </div>
+        )}
       </div>
     </div>
   )

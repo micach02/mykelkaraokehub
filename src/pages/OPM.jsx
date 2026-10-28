@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { CategoryTiles } from '../components/songs/CategoryTiles'
-import { QuickSearchChips } from '../components/songs/QuickSearchChips'
+import { ArtistRail } from '../components/songs/ArtistRail'
 import { YouTubeSetupNotice } from '../components/songs/YouTubeResults'
 import { FlagPH } from '../components/common/Icon'
 import { useCategories } from '../hooks/useSongs'
@@ -34,7 +34,7 @@ export default function OPM() {
       <section className="section" aria-labelledby="opm-artists-title">
         <h2 id="opm-artists-title" className="section__title">OPM Artists</h2>
         <p className="section__subtitle section__subtitle--spaced">Tap an artist to find their karaoke songs.</p>
-        <QuickSearchChips items={OPM_ARTISTS} onSelect={searchArtist} label="OPM artists" />
+        <ArtistRail artists={OPM_ARTISTS} onSelect={searchArtist} label="OPM artists" wrap />
       </section>
     </div>
   )

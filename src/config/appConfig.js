@@ -26,6 +26,8 @@ export const PLAYER_CONFIG = {
   // blocking autoplay with sound), show a "Play" button instead.
   autoplayTimeoutMs: 6000,
   defaultVolume: 100,
+  // "🎤 Mika, you're up!" on the video when a phone's song starts.
+  singerSplashMs: 4500,
 }
 
 export const SEARCH_CONFIG = {

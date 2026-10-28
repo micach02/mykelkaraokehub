@@ -11,10 +11,11 @@ import { SEARCH_CONFIG } from '../../config/appConfig'
 
 // Search-and-add panel used inside Karaoke Mode, so singers can add songs
 // without leaving the TV view. Results appear as you type.
-export function SongPicker() {
-  const [query, setQuery] = useState('')
+// initialQuery: open with this search already running (e.g. 🎲 Surprise me).
+export function SongPicker({ initialQuery = '' }) {
+  const [query, setQuery] = useState(initialQuery)
   // The query the user pressed Enter on (or picked) — searched in full.
-  const [submittedQuery, setSubmittedQuery] = useState('')
+  const [submittedQuery, setSubmittedQuery] = useState(initialQuery.trim())
   const trimmed = query.trim()
   const instantQuery = useDebouncedValue(trimmed, SEARCH_CONFIG.debounceMs)
   const liveQuery = useDebouncedValue(trimmed, SEARCH_CONFIG.liveDebounceMs)

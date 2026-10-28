@@ -30,10 +30,12 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
   - **enter their name first.** After scanning, a phone shows **Join the karaoke** and asks for a name before any songs appear; the name can't be skipped or left blank. It's remembered on the phone, and the 🎤 name button changes it. Every song they add shows a **🎤 Mika** badge in the TV queue, in Now Playing and Up next (including Karaoke Mode), and on every phone. Your own songs show as **You** on your phone.
 - **🎯 Karaoke Score** (optional): with **Auto-score** on (the default), scoring and recording start by themselves whenever a song starts, with no button to press. The app listens through your microphone, analyzes your voice **locally in the browser**, and when the song ends shows your final score out of 100, your stats, and your recording to play back or save. The next song plays automatically after 20 seconds. Nothing is uploaded. [How it works](#-karaoke-score).
 - **Queue**: add, Play Now, remove, reorder (drag and drop, ▲/▼, or ☰ plus arrow keys), skip, clear (asks first), and duplicate protection. **The next song plays automatically.**
-- **Karaoke Mode** (`/karaoke`) for a TV: a maximized player over a tidy control deck. Now playing is on the left, playback controls in the middle, and the QR code with **Add Songs / Queue / Exit** on the right. An **Up next** strip shows the next 3 songs and who's singing them ("🎤 Mika"). It also has a song picker, the queue, fullscreen, and keyboard shortcuts. On phones the deck stacks into one column.
+- **Karaoke Mode** (`/karaoke`) for a TV: a maximized player over a tidy control deck. Now playing is on the left, playback controls in the middle, and the QR code with **Add Songs / Queue / Exit** on the right. An **Up next** strip shows the next 3 songs and who's singing them ("🎤 Mika"). It also has a song picker, the queue, fullscreen, and keyboard shortcuts. On phones the deck stacks into one column. With nothing playing, the screen becomes a **party lobby**: a big QR code and room code, three join steps, **Find a song** / **🎲 Surprise me**, and Up next or tonight's top scores. Opening `/karaoke` directly starts the room too.
 - **🎉 Party features**
   - **Tonight's top scores:** every scored song goes on a leaderboard with the singer's name (👑 for the leader). The score screen shows "#2 of 7 tonight", Home shows the top 10 (with **Clear**), and phones show the top 5 in their Queue tab. Scores older than 12 hours drop off.
   - **Reactions:** guests tap 👏 🔥 😂 ❤️ 🎉 😍 on their phone, and they float up over the TV video with the sender's name.
+  - **"Mika, you're up!"** When a song added from a phone starts, the TV greets the singer over the video for a few seconds.
+  - **🎲 Surprise me** (Home and the Karaoke Mode lobby) queues a random song from My Songs or Recently sung that isn't already queued, with no search. On a first visit it suggests a random OPM artist instead.
   - **Duets:** on their own queued song, a guest can add a partner, shown everywhere as "🎤🎤 Mika & Jo".
   - **"Your turn in about 8 min":** phones estimate the wait from song lengths (fetched with each search for 1 quota unit) and the time left in the current song.
 - **Host settings** (Phone Remote panel on the TV):
@@ -43,7 +45,8 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
 - **Install as an app (PWA):** **📲 Install app** appears in the header when the browser supports it (Chrome/Edge on Android, desktop, Android TV). On iPhone: Share → Add to Home Screen.
 - **TV remote navigation:** in Karaoke Mode, the D-pad or arrow keys move between controls (OK/Enter presses), with a bold focus ring.
 - **Saved on the device**: the queue, current song, volume, My Songs, and the active room survive a refresh.
-- **Mobile layout**: bottom navigation, mini player, queue bottom sheet, and a video you can hide.
+- **Mobile layout**: bottom navigation, queue bottom sheet, and a video you can hide. The mini player only appears once the big player is scrolled out of view.
+- **Search comes first:** while you type, or while a song is playing, Home's big welcome steps aside, so the search box and results sit right under the player.
 - **Accessibility**: semantic landmarks, a skip link, focus rings, ARIA labels, native `<dialog>` modals, live regions, and `prefers-reduced-motion` support.
 
 ### Play Now vs. Add to Queue

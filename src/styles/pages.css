@@ -130,8 +130,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px);
+  gap: 4px;
+  padding: clamp(16px, 2.4vw, 28px) clamp(18px, 3vw, 32px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
@@ -150,15 +150,15 @@
   position: absolute;
   right: -60px;
   top: -60px;
-  width: 260px;
-  height: 260px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(252, 209, 22, 0.55), rgba(252, 209, 22, 0) 65%);
   pointer-events: none;
 }
 
 .page-banner__title {
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -166,7 +166,7 @@
 .page-banner__text {
   max-width: 60ch;
   color: rgba(245, 243, 255, 0.86);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 /* ---------- Category index ---------- */

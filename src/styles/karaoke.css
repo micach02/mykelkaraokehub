@@ -307,12 +307,34 @@
   gap: 12px;
 }
 
-/* Wraps on narrow screens (Auto-score moves to a second line). */
 .player-controls__group {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+/* Song options (Auto-score, Lock video) on their own line, under the
+   transport buttons, so nothing wraps at odd places. */
+.player-controls__options {
+  flex-basis: 100%;
+  flex-wrap: wrap;
+}
+
+/* Volume shrinks before anything wraps (phones). */
+.player-controls__volume {
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.player-controls__volume .volume-slider {
+  flex: 0 1 7rem;
+  width: auto;
+  min-width: 3rem;
+}
+
+.player-controls--xl .player-controls__volume .volume-slider {
+  flex-basis: 10rem;
 }
 
 .progress {
@@ -1257,3 +1279,258 @@
 }
 
 
+
+/* ---------- Party lobby (Karaoke Mode, nothing playing) ----------
+   intro: title, steps, buttons, up next / top scores │ big QR + room code */
+.party-lobby {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) auto;
+  align-items: center;
+  gap: clamp(24px, 5vw, 80px);
+  padding: clamp(24px, 5vw, 72px);
+  background:
+    radial-gradient(900px 420px at 15% 0%, rgba(255, 77, 148, 0.22), transparent 70%),
+    radial-gradient(900px 500px at 90% 100%, rgba(61, 217, 255, 0.16), transparent 70%),
+    radial-gradient(700px 400px at 60% 40%, rgba(123, 63, 228, 0.25), transparent 70%),
+    #07060f;
+  overflow-y: auto;
+}
+
+.party-lobby__intro {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vh, 24px);
+  min-width: 0;
+}
+
+.party-lobby__eyebrow {
+  font-size: clamp(0.85rem, 1.1vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.party-lobby__title {
+  max-width: 16ch;
+  font-size: clamp(2rem, 4.4vw, 4.6rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.party-lobby__title .gradient-text {
+  display: block;
+}
+
+.party-lobby__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  counter-reset: lobby-step;
+  font-size: clamp(1rem, 1.4vw, 1.35rem);
+  color: var(--text-muted);
+}
+
+.party-lobby__steps li {
+  position: relative;
+  padding-left: 2.2em;
+  counter-increment: lobby-step;
+}
+
+.party-lobby__steps li::before {
+  content: counter(lobby-step);
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: var(--gradient-ai);
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 800;
+}
+
+.party-lobby__steps strong {
+  color: var(--text);
+}
+
+.party-lobby__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.party-lobby__board {
+  max-width: 560px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--glass), rgba(12, 11, 24, 0.6);
+}
+
+.party-lobby__heading {
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.party-lobby__queue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: clamp(1rem, 1.3vw, 1.25rem);
+}
+
+.party-lobby__queue li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.party-lobby__song {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.party-lobby__join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.party-lobby__qr {
+  padding: clamp(12px, 1.4vw, 20px);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(180, 123, 255, 0.4), 0 24px 80px rgba(124, 92, 255, 0.45);
+  line-height: 0;
+}
+
+.party-lobby__qr svg {
+  width: clamp(180px, 22vw, 340px);
+  height: auto;
+}
+
+.party-lobby__code {
+  font-size: clamp(1.6rem, 2.6vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.party-lobby__phones {
+  color: var(--text-muted);
+  font-size: clamp(0.95rem, 1.2vw, 1.2rem);
+}
+
+/* Phones: the video area is a short 16:9 box, so the lobby takes its place
+   and scrolls with the page instead of being squeezed inside it. */
+@media (max-width: 900px) {
+  .player-stage--karaoke.player-stage--idle .karaoke-player {
+    display: none;
+  }
+
+  .party-lobby {
+    position: relative;
+    inset: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 760px) {
+  .party-lobby {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .party-lobby__join {
+    order: -1;
+  }
+}
+
+/* Idle deck under the lobby: just Add Songs · Queue · Exit. */
+.karaoke-mode--idle {
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'keys actions';
+}
+
+/* ---------- "🎤 Mika, you're up!" ---------- */
+.singer-splash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: min(90%, 900px);
+  padding: clamp(16px, 2.5vw, 32px) clamp(24px, 4vw, 56px);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(rgba(10, 8, 22, 0.88), rgba(10, 8, 22, 0.88)) padding-box,
+    var(--gradient-ai) border-box;
+  border: 2px solid transparent;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(124, 92, 255, 0.35);
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: singer-splash 4.5s var(--ease) forwards;
+}
+
+.singer-splash__eyebrow {
+  font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.singer-splash__who {
+  font-size: clamp(1.5rem, 3.6vw, 3.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.singer-splash__song {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(1rem, 1.8vw, 1.6rem);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@keyframes singer-splash {
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(0.92); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -55%) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .singer-splash {
+    animation: none;
+  }
+}

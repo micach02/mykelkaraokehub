@@ -7,12 +7,14 @@ import { ToastProvider } from './context/ToastContext'
 import { MainLayout } from './components/layout/MainLayout'
 import { Loading } from './components/common/Loading'
 import Home from './pages/Home'
+// Karaoke Mode is tiny (its parts are already loaded for the player), so it
+// opens instantly on a TV instead of showing a loading bar.
+import Karaoke from './pages/Karaoke'
 
 // Home is in the main bundle for a fast first paint; other pages load on demand.
 const OPM = lazy(() => import('./pages/OPM'))
 const Categories = lazy(() => import('./pages/Categories'))
 const QueuePage = lazy(() => import('./pages/QueuePage'))
-const Karaoke = lazy(() => import('./pages/Karaoke'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const Remote = lazy(() => import('./pages/Remote'))
 

@@ -5,6 +5,8 @@ import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { RecordingBadge } from '../scoring/RecordingBadge'
 import { ReactionLayer } from './ReactionLayer'
+import { PartyLobby } from './PartyLobby'
+import { SingerSplash } from './SingerSplash'
 import { useScoring } from '../../context/ScoringContext'
 import { cx } from '../../utils/classNames'
 
@@ -47,6 +49,9 @@ export function PlayerStage({ isKaraokeMode, onBrowse }) {
         onBrowse={onBrowse}
       />
 
+      {/* Karaoke Mode, nothing playing: the party's welcome screen. */}
+      {isKaraokeMode && !state.currentSong && <PartyLobby onBrowse={onBrowse} />}
+      <SingerSplash />
       <RecordingBadge />
       <ReactionLayer />
 

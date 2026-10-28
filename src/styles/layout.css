@@ -195,6 +195,14 @@
   background: rgba(33, 26, 61, 0.94);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow);
+  transition: transform 0.25s var(--ease), opacity 0.25s var(--ease);
+}
+
+/* The big player is on screen: get out of the way. */
+.mini-player--away {
+  transform: translateY(calc(100% + var(--mobile-nav-height)));
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mini-player__info {

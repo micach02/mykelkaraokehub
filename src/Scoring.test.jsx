@@ -361,6 +361,6 @@ describe('karaoke scoring', () => {
     render(<App />)
     const practice = within(await screen.findByRole('list', { name: 'Practice tracks' }))
     expect(practice.getByText('Twinkle, Twinkle, Little Star')).toBeTruthy()
-    expect(practice.getAllByText('🎯 Melody scoring')).toHaveLength(2)
+    expect(practice.getAllByText(/🎯 Melody scoring/)).toHaveLength(2)
   })
 })

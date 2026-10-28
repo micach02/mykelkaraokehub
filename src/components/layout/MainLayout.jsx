@@ -16,6 +16,7 @@ import { useKaraokeActions, useKaraokeState } from '../../context/KaraokeContext
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { useIdle } from '../../hooks/useIdle'
 import { useSpatialNavigation } from '../../hooks/useSpatialNavigation'
+import { useInView } from '../../hooks/useInView'
 import { exitFullscreen, getFullscreenElement } from '../../utils/fullscreen'
 import { cx } from '../../utils/classNames'
 import { ServerWaking } from './ServerWaking'
@@ -28,18 +29,26 @@ export function MainLayout() {
   const navigate = useNavigate()
   const isKaraokeMode = location.pathname === '/karaoke'
   const rootRef = useRef(null)
+  const topRef = useRef(null)
   const [queueOpen, setQueueOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // What the song picker opens with ('' = empty search box).
+  const [picker, setPicker] = useState({ query: '', key: 0 })
   const { isPlaying, currentSong, queue, lastPlayedSong } = useKaraokeState()
   // Fresh visit with nothing to play: hide the empty player so the search
   // comes first. It stays mounted (just hidden) and reappears when a song is
   // picked, or after a song ends (to show "Queue is empty").
   const stageHidden = !isKaraokeMode && !currentSong && queue.length === 0 && !lastPlayedSong
   const actions = useKaraokeActions()
+  // Phones: the mini player only shows once the big player is scrolled away.
+  const playerInView = useInView(topRef, { enabled: !isKaraokeMode && !stageHidden })
   const controlsHidden = useIdle(4000, isKaraokeMode && isPlaying && !queueOpen && !pickerOpen)
 
   const openQueue = useCallback(() => setQueueOpen(true), [])
-  const openPicker = useCallback(() => setPickerOpen(true), [])
+  const openPicker = useCallback((query) => {
+    setPicker((p) => ({ query: typeof query === 'string' ? query : '', key: p.key + 1 }))
+    setPickerOpen(true)
+  }, [])
 
   // Close sheets when the page changes, and leave app-level fullscreen when
   // leaving Karaoke Mode.
@@ -49,10 +58,16 @@ export function MainLayout() {
     if (!isKaraokeMode && getFullscreenElement() === document.documentElement) exitFullscreen()
   }, [location.pathname, isKaraokeMode])
 
-  const browse = useCallback(() => {
+  // query (optional): start with this search. Also used as a click handler,
+  // so anything that isn't a string means "no search".
+  const browse = useCallback((query) => {
     setQueueOpen(false)
     if (isKaraokeMode) {
-      setPickerOpen(true)
+      openPicker(query)
+      return
+    }
+    if (typeof query === 'string' && query) {
+      navigate({ pathname: '/', search: `?${new URLSearchParams({ q: query, yt: '1' })}` })
       return
     }
     navigate('/')
@@ -61,7 +76,7 @@ export function MainLayout() {
       input?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       input?.focus({ preventScroll: true })
     })
-  }, [isKaraokeMode, navigate])
+  }, [isKaraokeMode, navigate, openPicker])
 
   // TV remote D-pad: arrows move between controls in Karaoke Mode.
   useSpatialNavigation(isKaraokeMode)
@@ -92,7 +107,7 @@ export function MainLayout() {
       {!isKaraokeMode && <Header />}
       <ServerWaking />
 
-      <div className="app__top">
+      <div ref={topRef} className="app__top">
         <PlayerStage isKaraokeMode={isKaraokeMode} onBrowse={browse} />
         {!isKaraokeMode && <Sidebar onBrowse={browse} />}
       </div>
@@ -103,14 +118,14 @@ export function MainLayout() {
         </Suspense>
       </main>
 
-      {!isKaraokeMode && <MiniPlayerBar onOpenQueue={openQueue} />}
+      {!isKaraokeMode && <MiniPlayerBar onOpenQueue={openQueue} hidden={playerInView} />}
       {!isKaraokeMode && <MobileNav />}
 
       <Modal open={queueOpen} onClose={() => setQueueOpen(false)} title="Queue" variant="sheet">
         <Queue variant="sheet" onBrowse={browse} />
       </Modal>
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add songs" className="modal--wide">
-        <SongPicker />
+        <SongPicker key={picker.key} initialQuery={picker.query} />
       </Modal>
       <RoomPanel />
       <ScoringFlow />

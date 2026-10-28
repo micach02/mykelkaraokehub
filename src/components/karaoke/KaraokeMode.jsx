@@ -5,6 +5,7 @@ import { Button, ButtonLink } from '../common/Button'
 import { RequesterBadge } from '../common/RequesterBadge'
 import { RoomQrCard } from '../room/RoomQrCard'
 import { exitFullscreen } from '../../utils/fullscreen'
+import { cx } from '../../utils/classNames'
 
 const UP_NEXT_SHOWN = 3
 
@@ -41,14 +42,21 @@ function UpNext({ queue }) {
 export function KaraokeMode({ onOpenQueue, onOpenPicker, fullscreenTarget }) {
   const { currentSong, currentRequestedBy, currentDuetWith, queue, isPlaying } = useKaraokeState()
 
+  // Nothing playing: the party lobby above has the QR code and what's next,
+  // so the deck is just the buttons.
+  const idle = !currentSong
   return (
-    <div className="karaoke-mode">
-      <NowPlaying song={currentSong} requestedBy={currentRequestedBy} duetWith={currentDuetWith} isPlaying={isPlaying} size="xl" />
-      <PlayerControls size="xl" fullscreenTarget={fullscreenTarget} />
-      <div className="karaoke-mode__room">
-        <RoomQrCard />
-      </div>
-      <UpNext queue={queue} />
+    <div className={cx('karaoke-mode', idle && 'karaoke-mode--idle')}>
+      {!idle && (
+        <>
+          <NowPlaying song={currentSong} requestedBy={currentRequestedBy} duetWith={currentDuetWith} isPlaying={isPlaying} size="xl" />
+          <PlayerControls size="xl" fullscreenTarget={fullscreenTarget} />
+          <div className="karaoke-mode__room">
+            <RoomQrCard />
+          </div>
+          <UpNext queue={queue} />
+        </>
+      )}
       <div className="karaoke-mode__actions">
         <Button variant="primary" size="lg" icon="➕" onClick={onOpenPicker}>Add Songs</Button>
         <Button size="lg" icon="📋" onClick={onOpenQueue} aria-label={`Open queue, ${queue.length} songs waiting`}>
