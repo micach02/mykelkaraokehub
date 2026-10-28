@@ -25,6 +25,7 @@ export function createAudioAnalyzer() {
   const listeners = new Set()
   const analyzer = {
     latencySeconds: 0,
+    running: true,
     closed: false,
     recording: false,
     async open() {

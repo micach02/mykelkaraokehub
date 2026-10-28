@@ -18,6 +18,7 @@ import {
 import { ROOM_CONFIG } from '../config/appConfig'
 import { canPhoneControl, canPhoneGoNext, getRoomSettings, useRoomSettings } from '../services/roomSettings'
 import { showReaction } from '../services/reactionBus'
+import { pushMicBatch } from '../services/phoneMicBus'
 import { getLeaderboard, usePartyScores } from '../services/leaderboardService'
 import { REACTIONS } from '../utils/reactions'
 
@@ -159,7 +160,9 @@ export function RoomHostProvider({ children }) {
     const current = karaokeRef.current
     switch (type) {
       case COMMANDS.ADD_TO_QUEUE: {
-        const result = actions.addToQueue(payload.song, { requestedBy: from })
+        // phoneMic: this phone will be the mic for its song (see ScoringContext).
+        const requestedBy = payload.phoneMic ? { ...from, phoneMic: true } : from
+        const result = actions.addToQueue(payload.song, { requestedBy })
         if (result.ok) show(`📱 ${who} ${result.started ? 'started' : 'added'} “${payload.song.title}”`)
         break
       }
@@ -169,6 +172,10 @@ export function RoomHostProvider({ children }) {
         if (entry && entry.requestedBy?.id === from?.id) actions.removeFromQueue(entry.entryId)
         break
       }
+      // The singer's phone is the mic: only the current song's singer counts.
+      case COMMANDS.MIC_FRAMES:
+        if (from?.id && current.currentRequestedBy?.id === from.id) pushMicBatch(from.id, payload)
+        break
       case COMMANDS.REACT:
         if (current.currentSong && REACTIONS.includes(payload.emoji)) showReaction({ emoji: payload.emoji, name: who, senderId: from?.id })
         break
@@ -249,8 +256,9 @@ export function RoomHostProvider({ children }) {
     [partyScores],
   )
   const snapshot = useMemo(
-    () => ({ ...buildSnapshot(karaoke, library, recent), results, settings, leaderboard }),
-    [karaoke, library, recent, results, settings, leaderboard],
+    // micWanted: the TV scores songs, so the singer's phone mic is useful.
+    () => ({ ...buildSnapshot(karaoke, library, recent), results, settings, leaderboard, micWanted: Boolean(scoring?.autoScore) }),
+    [karaoke, library, recent, results, settings, leaderboard, scoring?.autoScore],
   )
   const snapshotKey = JSON.stringify(snapshot)
 

@@ -4,6 +4,7 @@ import { useKaraokeActions, useKaraokeState } from './KaraokeContext'
 import { useToast } from './ToastContext'
 import { createAudioAnalyzer, getMicrophonePermissionState, getScoringSupport } from '../services/scoring/audioAnalysisProvider'
 import { createScoringSession } from '../services/scoring/scoringSession'
+import { createPhoneAudioAnalyzer } from '../services/scoring/phoneAudioAnalyzer'
 import { getReferenceMelody } from '../services/scoring/referenceMelodyService'
 import { recordPerformance } from '../services/scoringHistoryService'
 import { recordPartyScore } from '../services/leaderboardService'
@@ -12,6 +13,12 @@ import { getItem, setItem, STORAGE_KEYS } from '../services/storageService'
 import { SCORING_SESSION } from '../config/scoringConfig'
 
 const ScoringContext = createContext(null)
+
+// The phone that offered to be the mic for the current song (its singer's),
+// or null: use this device's microphone.
+function phoneMicOf({ currentRequestedBy }) {
+  return currentRequestedBy?.phoneMic && currentRequestedBy.id ? currentRequestedBy.id : null
+}
 
 /**
  * Karaoke scoring flow (optional — the player works without it):
@@ -25,6 +32,10 @@ const ScoringContext = createContext(null)
  * checked, it goes idle → starting → singing without interrupting the song;
  * the first time, it takes the full flow above. ⏹ Stop then ▶ Play starts a
  * fresh take from the top.
+ *
+ * Phone mic: for a song added from a phone that offered its mic, the
+ * phone listens and sends its analysis; the TV skips its own mic setup and
+ * scores that instead (idle → singing). No recording then (no audio here).
  *
  * Audio frames never touch React state: they live in the scoring session.
  * The UI polls a small live snapshot ~10×/s.
@@ -48,6 +59,7 @@ export function ScoringProvider({ children }) {
   const autoTakeRef = useRef(false) // the current take was started by auto-score
   const autoEntryRef = useRef(null) // the queue entry auto-score last handled
   const attemptRef = useRef(0) // bumped whenever the mic is released (stale opens bail out)
+  const startPhoneTakeRef = useRef(() => false) // set below (defined later)
   const karaokeRef = useRef(karaoke)
   useLayoutEffect(() => {
     karaokeRef.current = karaoke
@@ -95,6 +107,8 @@ export function ScoringProvider({ children }) {
   const startSinging = useCallback(async ({ auto = false } = {}) => {
     const { currentSong, currentEntryId } = karaokeRef.current
     if (!currentSong) return
+    // The singer's phone is the mic: from the top, no setup here.
+    if (startPhoneTakeRef.current({ restart: true })) return
     attemptRef.current += 1 // a pending auto-start gives way
     autoTakeRef.current = auto
     autoEntryRef.current = currentEntryId
@@ -119,7 +133,7 @@ export function ScoringProvider({ children }) {
   }, [])
 
   // Start listening and recording. restart: play the song from the top.
-  const startSession = useCallback((analyzer, currentTake, { restart }) => {
+  const startSession = useCallback((analyzer, currentTake, { restart, noiseFloor = noiseFloorRef.current ?? 0 }) => {
     actions.setGuideEnabled(false)
     if (restart) actions.seek(0)
     sessionRef.current = createScoringSession({
@@ -127,12 +141,36 @@ export function ScoringProvider({ children }) {
       getSongTime: () => actions.getProgress().current,
       isPlaying: () => karaokeRef.current.playbackStatus === 'playing',
       referenceNotes: currentTake.melody?.notes ?? null,
-      noiseFloor: noiseFloorRef.current ?? 0,
+      noiseFloor,
     })
     if (SCORING_SESSION.recordAudio) analyzer.startRecording()
     if (restart) actions.play()
     setPhase('singing')
   }, [actions])
+
+  // The singer's phone is the mic: listen to it right away (no mic setup on
+  // this device). restart: sing again from the top.
+  const startPhoneTake = useCallback(({ restart = false } = {}) => {
+    const { currentSong, currentEntryId } = karaokeRef.current
+    const phoneId = phoneMicOf(karaokeRef.current)
+    if (!currentSong || !phoneId) return false
+    releaseMicrophone()
+    autoTakeRef.current = true
+    autoEntryRef.current = currentEntryId
+    const nextTake = { song: currentSong, entryId: currentEntryId, melody: getReferenceMelody(currentSong.id), phoneId }
+    setError(null)
+    setResults(null)
+    setTake(nextTake)
+    const analyzer = createPhoneAudioAnalyzer(phoneId)
+    analyzer.open()
+    analyzerRef.current = analyzer
+    // The phone's own surroundings aren't measured: default thresholds.
+    startSession(analyzer, nextTake, { restart, noiseFloor: 0 })
+    return true
+  }, [releaseMicrophone, startSession])
+  useLayoutEffect(() => {
+    startPhoneTakeRef.current = startPhoneTake
+  }, [startPhoneTake])
 
   // Countdown finished: restart the song and start listening, together.
   const beginSinging = useCallback(() => {
@@ -144,7 +182,9 @@ export function ScoringProvider({ children }) {
   // blocks the mic, skip silently (don't nag every song) instead of explaining.
   const autoStart = useCallback(async ({ blockedQuietly = true } = {}) => {
     const { currentSong, currentEntryId } = karaokeRef.current
-    if (!currentSong || !getScoringSupport().supported) return
+    if (!currentSong) return
+    if (startPhoneTake()) return // the singer's phone is the mic
+    if (!getScoringSupport().supported) return
     const started = attemptRef.current
     const permission = await getMicrophonePermissionState()
     // Started another way, stopped, or skipped meanwhile.
@@ -177,7 +217,7 @@ export function ScoringProvider({ children }) {
     }
     analyzerRef.current = analyzer
     startSession(analyzer, nextTake, { restart: false })
-  }, [startSinging, startSession, fail])
+  }, [startSinging, startSession, startPhoneTake, fail])
 
   // Start automatically when a new song starts playing from (near) the top.
   useEffect(() => {
@@ -257,7 +297,13 @@ export function ScoringProvider({ children }) {
     if (result.insufficient) {
       setTake(null)
       setPhase('idle')
-      show('No singing heard, so there’s no score for this song.', { variant: 'info' })
+      const phoneSinger = take.phoneId ? requesterName(karaokeRef.current.currentRequestedBy) : null
+      show(
+        phoneSinger
+          ? `No singing heard from ${phoneSinger}’s phone, so there’s no score for this song.`
+          : 'No singing heard, so there’s no score for this song.',
+        { variant: 'info' },
+      )
       actions.songEnded(entryId)
       return
     }
@@ -393,6 +439,8 @@ export function ScoringProvider({ children }) {
     results,
     mode: take?.melody ? 'melody' : 'voice',
     isActive: phase !== 'idle',
+    // Whose phone is the mic for this take (null: this device's mic).
+    phoneMicId: take?.phoneId ?? null,
     getAnalyzer: () => analyzerRef.current,
     getFrames: () => sessionRef.current?.getFrames() ?? null,
     autoScore,

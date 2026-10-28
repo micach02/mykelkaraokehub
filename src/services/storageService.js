@@ -80,6 +80,7 @@ export const STORAGE_KEYS = {
   hostedRoom: 'hosted-room',
   remoteIdentity: 'remote-identity',
   remoteSungSongs: 'remote-sung-songs',
+  phoneMic: 'phone-mic',
   videoLocked: 'video-locked',
   roomSettings: 'room-settings',
   partyScores: 'party-scores',

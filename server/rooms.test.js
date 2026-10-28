@@ -132,3 +132,32 @@ describe('command validation', () => {
     expect(sanitizeSong({ ...song, duration: 'long' }).duration).toBeNull()
   })
 })
+
+describe('phone mic', () => {
+  const frame = [120, 0.08, 0.16, 220, 0.97]
+
+  it('passes the singer phone’s pitch analysis to the TV, and nothing malformed', () => {
+    store = createRoomStore()
+    const { code, hostToken } = store.createRoom()
+    const tv = fakeStream()
+    store.attachHost(code, hostToken, tv)
+
+    store.sendMic(code, { from, batch: { latency: 0.03, frames: [frame, frame] } })
+    expect(tv.last('command')).toEqual({ type: 'MIC_FRAMES', payload: { latency: 0.03, frames: [frame, frame] }, from })
+
+    const bad = [
+      { from, batch: { frames: [] } },
+      { from, batch: { frames: [[1, 2, 3]] } },
+      { from, batch: { frames: [[0, 5, 0.1, 220, 0.9]] } }, // rms out of range
+      { from, batch: { frames: Array.from({ length: 200 }, () => frame) } },
+      { from, batch: 'audio' },
+      { batch: { frames: [frame] } }, // no sender
+    ]
+    for (const body of bad) expect(() => store.sendMic(code, body)).toThrow(/isn't valid/)
+  })
+
+  it('keeps a phone’s "I’ll be the mic" flag on songs it adds', () => {
+    expect(sanitizeCommand({ type: 'ADD_TO_QUEUE', payload: { song, phoneMic: true }, from }).payload.phoneMic).toBe(true)
+    expect(sanitizeCommand({ type: 'ADD_TO_QUEUE', payload: { song, phoneMic: 'yes' }, from }).payload.phoneMic).toBe(false)
+  })
+})

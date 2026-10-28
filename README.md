@@ -36,6 +36,7 @@ It's built for Filipino users first, with **OPM (Original Pilipino Music)** fron
   - **Reactions:** guests tap 👏 🔥 😂 ❤️ 🎉 😍 on their phone, and they float up over the TV video with the sender's name.
   - **"Mika, you're up!"** When a song added from a phone starts, the TV greets the singer over the video for a few seconds.
   - **🎲 Surprise me** (Home and the Karaoke Mode lobby) queues a random song from My Songs or Recently sung that isn't already queued, with no search. On a first visit it suggests a random OPM artist instead.
+  - **📱 Phone as the mic** (for a TV with no microphone): songs added from a phone are scored with **that phone's mic** when the singer's turn comes. The phone shows **"Your phone is the mic: sing!"** with a level meter, and starts by itself once the mic is allowed (the first time, tap **Start the phone mic**). The TV skips its own mic setup and shows **📱 Mika's phone mic** over the video, and the score works as usual: results, leaderboard, and phones. Turn it off with **Use this phone as the mic** in the phone's Queue tab. Needs the online version (`https://`). No recording to play back for phone-mic songs. It doesn't play your voice through the TV speakers.
   - **Duets:** on their own queued song, a guest can add a partner, shown everywhere as "🎤🎤 Mika & Jo".
   - **"Your turn in about 8 min":** phones estimate the wait from song lengths (fetched with each search for 1 quota unit) and the time left in the current song.
 - **Host settings** (Phone Remote panel on the TV):
@@ -171,9 +172,10 @@ If a component can't be measured, the total is re-weighted over the rest. With l
 - Your voice is **analyzed locally in your browser and is not uploaded**. The server never receives audio.
 - **The recording stays on this device.** It's kept in the browser's memory only until the results close. **⬇ Save recording** downloads it to your own device as a .webm file. The score comes from the live analysis, not from the file.
 - The microphone is released as soon as scoring finishes or stops.
+- **Phone as the mic:** with a phone mic, the phone analyzes your voice itself and sends only the numbers (pitch, loudness, about 30 sets a second, in one small message per second) to the TV through the karaoke server. **No audio leaves the phone**, and nothing is recorded.
 - Scores and personal bests are saved on this device only (the last 20 performances, plus your best score per song).
 
-> **The microphone needs a secure page.** Browsers only allow the mic on `https://` or `http://localhost`. On the TV computer, open **http://localhost:5173**. On the `http://192.168…` Wi-Fi address (as phones use it), the button explains why scoring isn't available there. The phone remote doesn't do scoring.
+> **The microphone needs a secure page.** Browsers only allow the mic on `https://` or `http://localhost`. On the TV computer, open **http://localhost:5173**. On the `http://192.168…` Wi-Fi address (as phones use it), the button explains why scoring isn't available there. For the same reason, **the phone mic only works with the online version** (GitHub Pages, `https://`), not on the home Wi-Fi address.
 
 ### Adding a reference melody
 

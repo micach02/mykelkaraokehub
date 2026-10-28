@@ -130,6 +130,12 @@ export function createLocalAudioAnalyzer({
       return () => listeners.delete(listener)
     },
 
+    // false: the browser is holding the audio engine until the user taps
+    // (some phones), so nothing is being heard yet.
+    get running() {
+      return !context || context.state === 'running'
+    },
+
     // Half the analysis window + the audio pipeline's own delay.
     get latencySeconds() {
       if (!context) return 0

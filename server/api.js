@@ -9,11 +9,12 @@
 //   GET  /api/rooms/:code/events              SSE stream (?role=host&token=… or ?role=remote)
 //   POST /api/rooms/:code/state               TV publishes its queue (header X-Host-Token)
 //   POST /api/rooms/:code/commands            phone sends a command
+//   POST /api/rooms/:code/mic                 phone mic: pitch analysis for the TV's score
 
 import { ApiError, openEventStream, readJson, sendError, sendJson } from './http.js'
 import { getLanOrigins, portFromHostHeader } from './network.js'
 
-const ROOM_ROUTE = /^\/api\/rooms\/([^/]+)(?:\/(events|state|commands))?$/
+const ROOM_ROUTE = /^\/api\/rooms\/([^/]+)(?:\/(events|state|commands|mic))?$/
 
 export function createKaraokeApi({ youtube, rooms, getLanOriginsFn = getLanOrigins }) {
   async function handle(req, res) {
@@ -71,6 +72,11 @@ export function createKaraokeApi({ youtube, rooms, getLanOriginsFn = getLanOrigi
         const body = await readJson(req)
         const command = rooms.sendCommand(code, body)
         return sendJson(res, 202, { ok: true, type: command.type })
+      }
+
+      if (action === 'mic' && method === 'POST') {
+        rooms.sendMic(code, await readJson(req))
+        return sendJson(res, 202, { ok: true })
       }
     }
 

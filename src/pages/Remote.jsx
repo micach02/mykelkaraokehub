@@ -6,6 +6,8 @@ import { useToast } from '../context/ToastContext'
 import { COMMANDS, toRemoteSong } from '../services/roomService'
 import { RemoteNowPlaying } from '../components/remote/RemoteNowPlaying'
 import { RemoteReactions } from '../components/remote/RemoteReactions'
+import { RemoteMic } from '../components/remote/RemoteMic'
+import { isPhoneMicSupported, usePhoneMic, usePhoneMicPreference } from '../hooks/usePhoneMic'
 import { RemoteSearch } from '../components/remote/RemoteSearch'
 import { RemoteQueue } from '../components/remote/RemoteQueue'
 import { RemoteNameForm } from '../components/remote/RemoteNameForm'
@@ -56,6 +58,18 @@ export default function Remote() {
   const canControl = canPhoneControl({ settings: room?.settings, nowPlayingRequestedBy: room?.nowPlaying?.requestedBy, phoneId: identity.id })
   const canNext = canPhoneGoNext({ settings: room?.settings, scoredRequestedBy: room?.nowPlaying?.requestedBy, nextRequestedBy: queue[0]?.requestedBy, phoneId: identity.id })
   const turn = useMemo(() => getMyTurn({ nowPlaying: room?.nowPlaying, queue, myId: identity.id }), [room?.nowPlaying, queue, identity.id])
+  // Phone mic: on this phone's turn (for songs it offered to be the mic for,
+  // while the TV scores), it listens and sends its analysis to the TV.
+  const micSupported = useMemo(() => isPhoneMicSupported(), [])
+  const [micPref, setMicPref] = usePhoneMicPreference()
+  const [micDismissed, setMicDismissed] = useState(null) // "Not this song"
+  const nowPlaying = room?.nowPlaying
+  const nowKey = nowPlaying ? `${nowPlaying.song.id}:${nowPlaying.requestedBy?.id ?? ''}` : null
+  const micActive = Boolean(
+    micSupported && micPref && nowPlaying?.requestedBy?.phoneMic && nowPlaying.requestedBy.id === identity.id
+      && room?.micWanted && !room?.results && !tvOffline && micDismissed !== nowKey,
+  )
+  const mic = usePhoneMic({ code, from: identity, active: micActive })
   useTurnAlert(turn, (song) => show(`🎤 It’s your turn! “${song.title}” is starting.`, { duration: 6000 }))
   const songState = useCallback(
     (song) => (pending.has(song.id) ? 'sending' : queuedIds.has(song.id) ? 'queued' : 'idle'),
@@ -105,14 +119,15 @@ export default function Remote() {
       return
     }
     setPending((set) => new Set(set).add(song.id))
-    const added = await run(COMMANDS.ADD_TO_QUEUE, { song: toRemoteSong(song) }, `✓ Added “${song.title}”`)
+    const payload = { song: toRemoteSong(song), ...(micSupported && micPref && { phoneMic: true }) }
+    const added = await run(COMMANDS.ADD_TO_QUEUE, payload, `✓ Added “${song.title}”`)
     if (added) navigator.vibrate?.(20)
     setPending((set) => {
       const next = new Set(set)
       next.delete(song.id)
       return next
     })
-  }, [queuedIds, run, show])
+  }, [queuedIds, run, show, micSupported, micPref])
 
   if (connection === 'waiting') {
     return (
@@ -200,6 +215,20 @@ export default function Remote() {
         />
       )}
 
+      {micActive && (
+        <RemoteMic
+          status={mic.status}
+          level={mic.level}
+          error={mic.error}
+          onStart={mic.start}
+          onStop={() => {
+            mic.stop()
+            setMicDismissed(nowKey)
+          }}
+          onDismiss={() => setMicDismissed(nowKey)}
+        />
+      )}
+
       {/* The Invite tab gives the QR code the whole screen, for easy scanning. */}
       {tab !== 'invite' && (
         <RemoteNowPlaying
@@ -230,6 +259,21 @@ export default function Remote() {
             onAdd={addSong}
             disabled={tvOffline}
           />
+        )}
+        {tab === 'queue' && micSupported && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={micPref}
+            className={cx('remote-mic-setting', micPref && 'remote-mic-setting--on')}
+            onClick={() => setMicPref(!micPref)}
+          >
+            <span className="remote-mic-setting__text">
+              <strong>🎤 Use this phone as the mic</strong>
+              <span>On your turn, sing into your phone for the score on the TV. Applies to songs you add from now on.</span>
+            </span>
+            <span className="remote-mic-setting__track" aria-hidden="true"><span className="remote-mic-setting__thumb" /></span>
+          </button>
         )}
         {tab === 'queue' && (
           <RemoteQueue

@@ -48,7 +48,8 @@ export function createScoringSession({ analyzer, getSongTime, isPlaying, referen
 
   const unsubscribe = analyzer.onFrame((frame) => {
     if (!active || !isPlaying()) return
-    const t = clock.now() - latency
+    // frame.age: heard this long before it arrived (phone mic batches).
+    const t = clock.now() - latency - (frame.age ?? 0)
     const kind = classifyFrame(frame, { noiseFloor })
     frames.push({ t, frequency: frame.frequency, midi: frame.midi, clarity: frame.clarity, rms: frame.rms, peak: frame.peak, kind })
   })

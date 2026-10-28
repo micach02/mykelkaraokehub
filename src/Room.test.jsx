@@ -110,6 +110,39 @@ describe('Phone Remote — TV side', () => {
     expect(await screen.findByText('📱 Mika skipped “Buwan”')).toBeTruthy()
   })
 
+  it('uses the singer’s phone as the mic: no mic setup on the TV, it scores what the phone heard', async () => {
+    renderApp('/')
+    const tv = await waitFor(() => {
+      const host = eventSource('host')
+      expect(host).toBeTruthy()
+      return host
+    })
+    act(() => tv.emit('open'))
+    const mika = { id: 'phone-mika', name: 'Mika' }
+    const jo = { id: 'phone-jo', name: 'Jo' }
+    act(() => tv.emit('command', { type: 'ADD_TO_QUEUE', payload: { song: SONGS.buwan, phoneMic: true }, from: mika }))
+    const player = within(screen.getByRole('region', { name: 'Karaoke player' }))
+    expect(await player.findByText('📱 Mika’s phone mic')).toBeTruthy()
+    expect(screen.queryByRole('dialog', { name: /Microphone/ })).toBeNull() // this TV's mic isn't used
+    // The TV tells phones it wants the mic (it's scoring).
+    await waitFor(() => expect(publishedStates().at(-1).body.micWanted).toBe(true))
+
+    // Once a second, the phone sends what it heard: pitch numbers, not audio.
+    const heard = (frame) => ({ latency: 0, frames: Array.from({ length: 30 }, (_, i) => [Math.round(((29 - i) * 1000) / 30), ...frame]) })
+    for (let second = 1; second <= 4; second += 1) {
+      act(() => {
+        fakePlayers.current.time = second
+        tv.emit('command', { type: 'MIC_FRAMES', payload: heard([0.08, 0.16, 220, 0.97]), from: mika })
+        // Someone else's phone can't sing for Mika.
+        tv.emit('command', { type: 'MIC_FRAMES', payload: heard([0.3, 0.6, 900, 0.97]), from: jo })
+      })
+    }
+    act(() => fakePlayers.current.end())
+    const results = within(await screen.findByRole('dialog', { name: 'Karaoke Score' }, { timeout: 5000 }))
+    expect(results.getByLabelText(/Karaoke Score \d+ out of 100/)).toBeTruthy()
+    expect(results.queryByRole('region', { name: 'Your recording' })).toBeNull() // no audio on the TV to play back
+  })
+
   it('phones may pause/skip only their own song, unless the host allows any', async () => {
     renderApp('/')
     const tv = await waitFor(() => {

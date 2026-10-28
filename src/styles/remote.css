@@ -724,3 +724,165 @@ button.remote__status {
 .remote-invite__copy {
   grid-column: 1 / -1;
 }
+
+/* Phone mic: your turn, this phone listens for the TV's score */
+.remote-mic {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 16px 0;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgba(20, 14, 40, 0.94), rgba(20, 14, 40, 0.94)) padding-box,
+    var(--gradient-ai) border-box;
+  box-shadow: 0 10px 30px rgba(124, 92, 255, 0.25);
+}
+
+.remote-mic__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.remote-mic__title {
+  font-size: 1.05rem;
+}
+
+.remote-mic__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff4d6d;
+  box-shadow: 0 0 10px #ff4d6d;
+  animation: remote-mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes remote-mic-pulse {
+  50% { opacity: 0.35; }
+}
+
+.remote-mic__meter {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  height: 28px;
+  align-items: end;
+}
+
+.remote-mic__bar {
+  height: 30%;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: height 0.1s, background 0.1s;
+}
+
+.remote-mic__bar--on {
+  height: 100%;
+  background: linear-gradient(180deg, #ff8ec2, #7c5cff);
+}
+
+.remote-mic__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.remote-mic__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.remote-mic__start {
+  flex: 1;
+  height: 3rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-brand);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+}
+
+.remote-mic__link {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Queue tab: "Use this phone as the mic" switch */
+.remote-mic-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.remote-mic-setting--on {
+  border-color: rgba(180, 123, 255, 0.45);
+  background: rgba(124, 92, 255, 0.1);
+}
+
+.remote-mic-setting__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.remote-mic-setting__text span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.remote-mic-setting__track {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.15s;
+}
+
+.remote-mic-setting__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.remote-mic-setting--on .remote-mic-setting__track {
+  background: var(--gradient-ai);
+}
+
+.remote-mic-setting--on .remote-mic-setting__thumb {
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remote-mic__dot {
+    animation: none;
+  }
+}

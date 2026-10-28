@@ -11,6 +11,7 @@
 import crypto from 'node:crypto'
 import { ApiError } from './http.js'
 import { REACTIONS } from '../src/utils/reactions.js'
+import { sanitizeMicBatch } from '../src/utils/micFrames.js'
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I
 const CODE_PATTERN = /^MKH-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/
@@ -69,7 +70,8 @@ export function sanitizeCommand(command) {
   switch (command.type) {
     case 'ADD_TO_QUEUE': {
       const song = sanitizeSong(command.payload?.song)
-      return song ? { type: command.type, payload: { song }, from } : null
+      // phoneMic: this phone will be the mic for its song (for the score).
+      return song ? { type: command.type, payload: { song, phoneMic: command.payload?.phoneMic === true }, from } : null
     }
     case 'REMOVE_FROM_QUEUE': {
       const entryId = text(command.payload?.entryId, 120)
@@ -193,6 +195,21 @@ export function createRoomStore({ now = () => Date.now() } = {}) {
       if (room.hosts.size === 0) {
         throw new ApiError(409, 'host-offline', "The TV isn't connected right now. Make sure myKel Karaoke is open on the TV.")
       }
+      room.hosts.forEach((stream) => stream.send('command', command))
+      return command
+    },
+
+    // Phone mic: the singer's phone sends its pitch analysis (numbers, not
+    // audio) for the TV to score. Passed straight to the TV.
+    sendMic(code, body) {
+      const room = requireRoom(code)
+      const from = sanitizeSender(body?.from)
+      const batch = sanitizeMicBatch(body?.batch)
+      if (!from || !batch) throw new ApiError(400, 'bad-mic', "That request isn't valid.")
+      if (room.hosts.size === 0) {
+        throw new ApiError(409, 'host-offline', "The TV isn't connected right now. Make sure myKel Karaoke is open on the TV.")
+      }
+      const command = { type: 'MIC_FRAMES', payload: batch, from }
       room.hosts.forEach((stream) => stream.send('command', command))
       return command
     },

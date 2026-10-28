@@ -14,6 +14,8 @@ export const COMMANDS = {
   TOGGLE_PLAY: 'TOGGLE_PLAY',
   SET_DUET: 'SET_DUET',
   REACT: 'REACT',
+  // Phone mic batches (sent to /mic, arrive at the TV like a command).
+  MIC_FRAMES: 'MIC_FRAMES',
 }
 
 const roomPath = (code) => `/api/rooms/${encodeURIComponent(code)}`
@@ -34,6 +36,11 @@ export function publishRoomState(code, hostToken, state) {
 
 export function sendRoomCommand(code, command) {
   return apiPost(`${roomPath(code)}/commands`, command)
+}
+
+// Phone mic: one batch of pitch analysis (see utils/micFrames.js).
+export function sendRoomMic(code, from, batch) {
+  return apiPost(`${roomPath(code)}/mic`, { from, batch })
 }
 
 // Opens the event stream. handlers: { [eventName]: (data) => void, onOpen, onError }.

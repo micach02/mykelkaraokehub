@@ -44,6 +44,8 @@ const limiter = createRateLimiter({
     { name: 'rooms', match: (req) => req.method === 'POST' && req.url === '/api/rooms', limit: 20, windowMs: 60 * 60 * 1000 },
     // Phone commands, incl. reactions (a whole party may share one address).
     { name: 'commands', match: (req) => req.method === 'POST' && /^\/api\/rooms\/[^/]+\/commands$/.test(req.url), limit: 3000, windowMs: 60 * 60 * 1000 },
+    // Phone mic: one small batch per second while someone sings.
+    { name: 'mic', match: (req) => req.method === 'POST' && /^\/api\/rooms\/[^/]+\/mic$/.test(req.url), limit: 6000, windowMs: 60 * 60 * 1000 },
   ],
 })
 
