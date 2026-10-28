@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { cx } from '../../utils/classNames'
 
 // Controlled search input. Esc clears; Enter submits.
@@ -23,13 +23,33 @@ export function SearchBar({
   const inputId = id ?? generatedId
   const prompt = variant === 'prompt'
 
+  // The box shows what was typed right away. `value` (e.g. the ?q= in the
+  // URL) can arrive a moment later, one keystroke at a time; echoes of our
+  // own typing are ignored so fast typing never loses letters. Any other
+  // change (a chip, Clear, Back) replaces the text.
+  const [text, setText] = useState(value)
+  const typed = useRef(new Set())
+  useEffect(() => {
+    if (typed.current.has(value)) {
+      if (value === text) typed.current.clear()
+      return
+    }
+    typed.current.clear()
+    setText(value)
+  }, [value])
+  const change = (next) => {
+    typed.current.add(next)
+    setText(next)
+    onChange(next)
+  }
+
   return (
     <form
       role="search"
       className={cx('search-bar', `search-bar--${size}`, prompt && 'search-bar--prompt', loading && 'search-bar--loading', className)}
       onSubmit={(event) => {
         event.preventDefault()
-        onSubmit?.(value)
+        onSubmit?.(text)
       }}
     >
       <label htmlFor={inputId} className="sr-only">{label}</label>
@@ -39,30 +59,30 @@ export function SearchBar({
         id={inputId}
         type="search"
         className="search-bar__input"
-        value={value}
+        value={text}
         placeholder={placeholder}
         autoComplete="off"
         spellCheck="false"
         enterKeyHint="search"
         autoFocus={autoFocus}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => change(event.target.value)}
         onFocus={onFocus}
         onKeyDown={(event) => {
-          if (event.key === 'Escape' && value) {
+          if (event.key === 'Escape' && text) {
             event.preventDefault()
             event.stopPropagation()
-            onChange('')
+            change('')
           }
         }}
       />
       {loading && <span className="search-bar__spinner" aria-hidden="true" />}
-      {value ? (
+      {text ? (
         <button
           type="button"
           className="search-bar__clear"
           aria-label="Clear search"
           onClick={() => {
-            onChange('')
+            change('')
             inputRef.current?.focus()
           }}
         >
